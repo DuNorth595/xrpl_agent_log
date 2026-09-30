@@ -1,0 +1,46 @@
+[project]
+name = "xrpl_agent_log"
+version = "0.1.0"
+description = "Tamper-evident history log for AI agents on the XRP Ledger — append-only, signed-by-both-parties, replayable"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [{name = "Justin Douglas", email = "S_DevLabs@outlook.com"}]
+readme = "README.md"
+keywords = ["xrpl", "agent", "log", "audit", "replay", "xrp-ledger"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "xrpl-py>=4.5.0",
+    "xrpl_agent_id>=0.4.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pre-commit>=3.5.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/DuNorth595/xrpl_agent_log"
+Repository = "https://github.com/DuNorth595/xrpl_agent_log"
+Issues = "https://github.com/DuNorth595/xrpl_agent_log/issues"
+
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
