@@ -2,25 +2,67 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+.Python
 *.egg-info/
+*.egg
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 build/
 dist/
+*.venv/
+*-venv/
+install-test/
+# Virtual envs
+venv/
+.venv/
+env/
 
-# Editor
+# Secrets — testnet keys MUST NEVER be committed
+testnet_keys/
+*.secret
+seeds.json
+# Harness run artifacts (may contain testnet seeds / wallet JSON)
+results/*.json
+results/
+
+# Snapshot folders (release snapshots; rebuild via build_doc_pdf.py / build_pdf.py)
+docs_snapshot_*/
+
+# PDF / build artifacts (regenerable from docs/*.md)
+xrpl_agent_log_*.pdf
+xrpl_agent_log_*.html
+_cover.html
+_footer.html
+_print_css.html
+_doc_cover.html
+_doc_footer.html
+_doc_css.html
+_doc_print_css.html
+
+# Preview screenshots from PDF build
+preview_*.png
+
+# IDE / editor
 .vscode/
 .idea/
-*.swp
 .DS_Store
+*.swp
+*.swo
 
-# venv
-.venv/
-venv/
+# OS
+Thumbs.db
 
-# Test/build artifacts
-*.db
-live_anchor_verify.db
-live_phase*.db
+# Logs
+*.log
+
+# Live test run artifacts (regenerable from scripts/verify_live_extended.py)
 live_extended_results.json
-xrpl_agent_log_TEST_REPORT.html
-xrpl_agent_log_TEST_REPORT.pdf
+
+# SQLite (regenerable; tests use a tmpdir)
+*.db
+*.db-shm
+*.db-wal

@@ -67,6 +67,25 @@ LEGACY_ALLOWLIST = (
     "test_",
 )
 
+# Files / line numbers where a 64-char hex string is known to be
+# data (e.g., a published XRPL tx hash in a doc) rather than a
+# private key. Format: (relative_path, line_number) -> reason.
+#
+# To add a new entry: include the file path, the line number, and a one-line
+# explanation of WHY the hex is data and not a secret. Do NOT add entries
+# just to silence the scanner.
+LINE_ALLOWLIST = {
+    # SESSION_2026-09-30.md — Live XRPL testnet tx hashes (public data)
+    ("SESSION_2026-09-30.md", 55): "Live XRPL testnet tx hash (public on-ledger)",
+    ("SESSION_2026-09-30.md", 79): "Testnet explorer URL with tx hash",
+    ("SESSION_2026-09-30.md", 169): "Live XRPL testnet tx hash (public on-ledger)",
+    # docs/00_executive_summary.md — Live XRPL testnet tx hash in published exec summary
+    ("docs/00_executive_summary.md", 38): "Live XRPL testnet tx hash (public on-ledger)",
+    ("docs/00_executive_summary.md", 39): "Testnet explorer URL with tx hash",
+    # docs/01_usage.md — Worked example in API reference
+    ("docs/01_usage.md", 128): "Worked example: anchor tx hash in log table",
+}
+
 
 def _is_allowlisted(path: Path) -> bool:
     """Return True if the path matches any allowlist entry."""
@@ -97,10 +116,17 @@ def _scan_file(path: Path) -> list[tuple[int, str, str]]:
         # Hex key — only flag if 64 chars (without 0x prefix) or starts with 0x.
         for m in HEX_KEY.finditer(line):
             token = m.group(0)
+            # Skip if path + line is in the line-level allowlist
+            try:
+                rel_key = (path.resolve().relative_to(Path.cwd()).as_posix(), lineno)
+            except ValueError:
+                rel_key = (path.name, lineno)
             if token.startswith("0x") and len(token) == 66:
-                hits.append((lineno, line.strip(), "hex_key_0x"))
+                if rel_key not in LINE_ALLOWLIST:
+                    hits.append((lineno, line.strip(), "hex_key_0x"))
             elif len(token) == 64:
-                hits.append((lineno, line.strip(), "hex_key"))
+                if rel_key not in LINE_ALLOWLIST:
+                    hits.append((lineno, line.strip(), "hex_key"))
     return hits
 
 
