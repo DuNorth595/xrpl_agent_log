@@ -16,3 +16,11 @@ dist/
 # venv
 .venv/
 venv/
+
+# Test/build artifacts
+*.db
+live_anchor_verify.db
+live_phase*.db
+live_extended_results.json
+xrpl_agent_log_TEST_REPORT.html
+xrpl_agent_log_TEST_REPORT.pdf
