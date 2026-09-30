@@ -37,11 +37,13 @@ xrpl_agent_log_*.pdf
 xrpl_agent_log_*.html
 _cover.html
 _footer.html
+_print_css.css
 _print_css.html
 _doc_cover.html
 _doc_footer.html
 _doc_css.html
 _doc_print_css.html
+_doc_print_css.css
 
 # Preview screenshots from PDF build
 preview_*.png
