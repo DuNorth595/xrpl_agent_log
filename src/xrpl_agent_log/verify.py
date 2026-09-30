@@ -18,6 +18,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from xrpl.models import Tx
 from xrpl.wallet import Wallet
 
 from xrpl_agent_log.entry import compute_entry_hash
@@ -124,11 +125,29 @@ def verify_on_chain_anchor(
         if e.on_chain_tx_hash is None:
             continue
         try:
-            response = xrpl_client.request({
-                "command": "tx",
-                "transaction": e.on_chain_tx_hash,
-            })
-            if response.result.get("hash") != e.on_chain_tx_hash:
+            # xrpl-py 4.x: use the Tx model rather than raw dict — the
+            # server validates the response against the model schema.
+            response = xrpl_client.request(
+                Tx(transaction=e.on_chain_tx_hash)
+            )
+            result = response.result
+            # xrpl-py 4.x returns either a Tx model or a dict depending on
+            # the path; normalize.
+            if hasattr(result, "to_dict"):
+                result = result.to_dict()
+            elif hasattr(result, "__dict__"):
+                result = vars(result)
+            # rippled returns {"error": "txnNotFound", ...} in result
+            # when the tx is not on the ledger. Treat that as a failed lookup.
+            if "error" in result:
+                errors.append(
+                    f"On-chain lookup failed at sequence {e.sequence} "
+                    f"(tx_hash={e.on_chain_tx_hash[:16]}...): "
+                    f"rippled error {result.get('error')!r}"
+                )
+                continue
+            returned_hash = result.get("hash")
+            if returned_hash != e.on_chain_tx_hash:
                 errors.append(
                     f"On-chain anchor mismatch at sequence {e.sequence}: "
                     f"looked up {e.on_chain_tx_hash[:16]}... "
