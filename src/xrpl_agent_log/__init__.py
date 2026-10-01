@@ -43,7 +43,7 @@ from xrpl_agent_log.verify import (
     verify_signatures,
 )
 
-__version__ = "0.2.0a1"
+__version__ = "0.2.0"
 XRPL_AGENT_LOG_VERSION = __version__  # canonical alias
 
 try:
