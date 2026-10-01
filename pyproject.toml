@@ -20,7 +20,9 @@ classifiers = [
 ]
 dependencies = [
     "xrpl-py>=4.5.0",
-    "xrpl_agent_id>=0.4.0",
+    # xrpl_agent_id is not on PyPI yet — install from GitHub.
+    # Required for AgentIdentity (used in docstrings + SigningPair.from_identities).
+    "xrpl_agent_id @ git+https://github.com/DuNorth595/xrpl_agent_id.git@v0.4.1",
 ]
 
 [project.optional-dependencies]

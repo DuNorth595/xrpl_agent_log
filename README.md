@@ -8,6 +8,8 @@
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![xrpl-py 4.5+](https://img.shields.io/badge/xrpl--py-4.5+-black.svg)](https://pypi.org/project/xrpl-py/)
 [![SPDX: REUSE](https://img.shields.io/badge/SPDX-REUSE--compliant-brightgreen)](https://reuse.software/)
+[![CI](https://github.com/DuNorth595/xrpl_agent_log/actions/workflows/ci.yml/badge.svg)](https://github.com/DuNorth595/xrpl_agent_log/actions/workflows/ci.yml)
+[![GitHub release](https://img.shields.io/badge/release-v0.2.0-blue)](https://github.com/DuNorth595/xrpl_agent_log/releases)
 
 ---
 
@@ -20,7 +22,7 @@
 | **Contact:** | S_DevLabs@outlook.com |
 | **License:** | MIT |
 | **Python:** | ≥ 3.9 |
-| **Dependencies:** | `xrpl-py` ≥ 4.5.0, `xrpl_agent_id` ≥ 0.4.0 |
+| **Dependencies:** | `xrpl-py` ≥ 4.5.0, [`xrpl_agent_id`](https://github.com/DuNorth595/xrpl_agent_id) ≥ 0.4.1 (installed from GitHub — not on PyPI yet) |
 | **Optional extras:** | `dev` (pytest + pre-commit) |
 
 **What this is in one sentence:**
@@ -92,12 +94,27 @@ verify_on_chain_anchor(log, -1)    # → True (verifies last entry's anchor)
 ## Install
 
 ```bash
-pip install xrpl_agent_log
+# Install xrpl_agent_log — pulls xrpl_agent_id from GitHub automatically
+# (xrpl_agent_id is not on PyPI yet; see pyproject.toml)
+pip install "xrpl_agent_log @ git+https://github.com/DuNorth595/xrpl_agent_log.git@v0.2.0"
 ```
+
+Or, for the very latest main:
+
+```bash
+pip install "xrpl_agent_log[dev] @ git+https://github.com/DuNorth595/xrpl_agent_log.git"
+```
+
+> **Why no `pip install xrpl_agent_log`?** Both `xrpl_agent_log` and
+> `xrpl_agent_id` are published via GitHub, not PyPI, in the 0.2.x line.
+> Once both reach PyPI, `pip install xrpl_agent_log` will work.
+> Until then, install via `git+https://...`.
 
 For development (test + pre-commit):
 
 ```bash
+git clone https://github.com/DuNorth595/xrpl_agent_log.git
+cd xrpl_agent_log
 pip install -e ".[dev]"
 pre-commit install   # enables the local seed-scanner hook
 ```
