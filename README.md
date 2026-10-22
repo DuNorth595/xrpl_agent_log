@@ -119,13 +119,13 @@ so you get the failure reason, not just `False`.
 ```bash
 # Install xrpl_agent_log — pulls xrpl_agent_id from GitHub automatically
 # (xrpl_agent_id is not on PyPI yet; see pyproject.toml)
-pip install "xrpl_agent_log @ git+https://github.com/DuNorth595/xrpl_agent_log.git@v0.2.0"
+pip install "xrpl_agent_log @ git+https://github.com/DuNorth595/xrpl_agent_log.git@v0.2.1"
 ```
 
 Or, for the very latest main:
 
 ```bash
-pip install "xrpl_agent_log[dev] @ git+https://github.com/DuNorth595/xrpl_agent_log.git@v0.2.0"
+pip install "xrpl_agent_log[dev] @ git+https://github.com/DuNorth595/xrpl_agent_log.git@v0.2.1"
 ```
 
 > **Why no `pip install xrpl_agent_log`?** Both `xrpl_agent_log` and

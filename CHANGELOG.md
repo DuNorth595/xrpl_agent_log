@@ -6,6 +6,41 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-22
+
+Fixes a broken install and a documentation layer that did not match the code.
+
+### Fixed
+- **`v0.2.0` could not be installed.** The tag's `pyproject.toml` required
+  `xrpl_agent_id>=0.4.0` from PyPI, where neither package is published, so pip
+  failed to resolve it. That dependency now points at a pinned GitHub tag. This
+  release is the first installable tag.
+- README quick-start rewritten — every line previously used an API that does not
+  exist (`Log(storage=, signers=)`, `log.append(payload)`, `entry.canonical_hash`,
+  `verify_signatures(log)`, `verify_on_chain_anchor(log, -1)`).
+- The headline "optionally XRPL-anchored / submits 1-drop Payment" claim was
+  untrue: the library contains no `Payment` or `submit` call. It records an anchor
+  hash you supply and verifies it over JSON-RPC. README and docs corrected.
+- `44/44 tests passing` corrected to `43 passed, 1 skipped` — the live testnet
+  test is gated behind `RUN_LIVE=1` and self-skips.
+- `docs/01_usage.md` API reference regenerated from source; it documented
+  `DuplicateSequenceError`, `_with_report()`, `canonical_hash`, `anchor_tx_hash`
+  and a `Party` dataclass, none of which exist.
+- Three links to `xrpl_agent_log_TEST_REPORT.pdf` pointed at a gitignored file and
+  404'd; repointed at tracked markdown.
+- `build_test_report_pdf.py` read a path that no longer existed after the report
+  moved to `docs/archive/`.
+- Development Status Alpha -> Beta.
+
+### Added
+- REUSE/SPDX compliance made real: `LICENSES/MIT.txt`, `.reuse/dep5`, and a
+  `reuse lint` CI gate, so the badge in the README is now true.
+- `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, and GitHub issue/PR templates.
+
+### Changed
+- Install instructions pinned to a tag (`@v0.2.1`) instead of tracking `main`.
+- `SESSION_2026-09-30.md` moved to `docs/internal/`.
+
 ## [0.2.0] - 2026-09-30
 
 First public release. **Alpha** — APIs may change before 1.0.0.
