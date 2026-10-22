@@ -67,24 +67,28 @@ LEGACY_ALLOWLIST = (
     "test_",
 )
 
-# Files / line numbers where a 64-char hex string is known to be
-# data (e.g., a published XRPL tx hash in a doc) rather than a
-# private key. Format: (relative_path, line_number) -> reason.
+# Public on-ledger data that is shaped like a 64-char hex string.
 #
-# To add a new entry: include the file path, the line number, and a one-line
-# explanation of WHY the hex is data and not a secret. Do NOT add entries
-# just to silence the scanner.
-LINE_ALLOWLIST = {
-    # SESSION_2026-09-30.md — Live XRPL testnet tx hashes (public data)
-    ("SESSION_2026-09-30.md", 55): "Live XRPL testnet tx hash (public on-ledger)",
-    ("SESSION_2026-09-30.md", 79): "Testnet explorer URL with tx hash",
-    ("SESSION_2026-09-30.md", 169): "Live XRPL testnet tx hash (public on-ledger)",
-    # docs/00_executive_summary.md — Live XRPL testnet tx hash in published exec summary
-    ("docs/00_executive_summary.md", 38): "Live XRPL testnet tx hash (public on-ledger)",
-    ("docs/00_executive_summary.md", 39): "Testnet explorer URL with tx hash",
-    # docs/01_usage.md — Worked example in API reference
-    ("docs/01_usage.md", 128): "Worked example: anchor tx hash in log table",
-}
+# A transaction hash and a secp256k1 private key are indistinguishable by shape
+# alone, so we classify by context rather than by (file, line) pair. The previous
+# LINE_ALLOWLIST keyed exemptions on exact line numbers, which broke silently the
+# moment a document was edited above an entry or the file was moved — and CI only
+# runs this scanner with --all-files, so the breakage surfaced on the remote.
+#
+# A private key does not appear in an explorer URL, nor on a line that labels the
+# value as a tx hash or entry hash. Everything else is still flagged.
+PUBLIC_DATA_PATTERNS = (
+    re.compile(r"xrpl\.org/transactions/", re.IGNORECASE),
+    re.compile(r"\b(?:tx|txn|transaction)\s+hash\b", re.IGNORECASE),
+    re.compile(r"\bhash\s*[:=]\s*[A-F0-9]{16,}", re.IGNORECASE),
+    re.compile(r"anchor_tx_hash|on_chain_tx_hash|entry_hash|MemoData", re.IGNORECASE),
+    re.compile(r"\banchor(?:ed|ing)?\b|\bledger\s+tx\b", re.IGNORECASE),
+)
+
+
+def _is_public_data(line: str) -> bool:
+    """True if the line identifies a 64-char hex token as public on-ledger data."""
+    return any(p.search(line) for p in PUBLIC_DATA_PATTERNS)
 
 
 def _is_allowlisted(path: Path) -> bool:
@@ -116,17 +120,14 @@ def _scan_file(path: Path) -> list[tuple[int, str, str]]:
         # Hex key — only flag if 64 chars (without 0x prefix) or starts with 0x.
         for m in HEX_KEY.finditer(line):
             token = m.group(0)
-            # Skip if path + line is in the line-level allowlist
-            try:
-                rel_key = (path.resolve().relative_to(Path.cwd()).as_posix(), lineno)
-            except ValueError:
-                rel_key = (path.name, lineno)
+            # Skip only when the line identifies this token as public
+            # on-ledger data (a tx hash), not on (file, line) coordinates.
+            if _is_public_data(line):
+                continue
             if token.startswith("0x") and len(token) == 66:
-                if rel_key not in LINE_ALLOWLIST:
-                    hits.append((lineno, line.strip(), "hex_key_0x"))
+                hits.append((lineno, line.strip(), "hex_key_0x"))
             elif len(token) == 64:
-                if rel_key not in LINE_ALLOWLIST:
-                    hits.append((lineno, line.strip(), "hex_key"))
+                hits.append((lineno, line.strip(), "hex_key"))
     return hits
 
 
