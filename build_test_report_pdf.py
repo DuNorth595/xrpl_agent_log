@@ -16,7 +16,7 @@ from playwright.async_api import async_playwright
 
 
 HERE = Path(__file__).parent
-MD_IN = HERE / "LIVE_TEST_REPORT.md"
+MD_IN = HERE / "docs" / "archive" / "LIVE_TEST_REPORT.md"
 HTML_OUT = HERE / "xrpl_agent_log_TEST_REPORT.html"
 PDF_OUT = HERE / "xrpl_agent_log_TEST_REPORT.pdf"
 

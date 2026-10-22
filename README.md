@@ -16,7 +16,7 @@
 ## Cover Page
 
 | **Package:** | `xrpl_agent_log` |
-| **Version:** | 0.2.0 (alpha) |
+| **Version:** | 0.2.0 |
 | **Author:** | Justin Douglas |
 | **Organization:** | S_DevLabs (Strategic Development Labs) |
 | **Contact:** | S_DevLabs@outlook.com |
@@ -42,50 +42,73 @@ Use `xrpl-py`'s `Wallet`.
 
 ```python
 from xrpl.wallet import Wallet
-from xrpl_agent_id import AgentIdentity
 from xrpl_agent_log import Log, SigningPair, SQLiteStorage
 
 # Two parties — each loads its own wallet + DID
-wallet_a = Wallet.create()  # In production: load from secure storage
+wallet_a = Wallet.create()   # In production: load from secure storage
 wallet_b = Wallet.create()
-identity_a = AgentIdentity.from_seed(wallet_a.seed, network="testnet")
-identity_b = AgentIdentity.from_seed(wallet_b.seed, network="testnet")
 
-# Create a signing pair (mutual attestation)
-sig_pair = SigningPair.from_wallets_with_dids(
-    party_a=(wallet_a, identity_a.did),
-    party_b=(wallet_b, identity_b.did),
+# A signing pair is the mutual-attestation identity of the two parties
+# The DID must end in the matching wallet's classic address — the library
+# enforces this on every signature and raises ValueError otherwise.
+pair = SigningPair(
+    wallet_a=wallet_a,
+    wallet_b=wallet_b,
+    did_a=f"did:xrpl:testnet:{wallet_a.classic_address}",
+    did_b=f"did:xrpl:testnet:{wallet_b.classic_address}",
+    network="testnet",
 )
 
 # Open the log (append-only SQLite)
 storage = SQLiteStorage("agent_history.db", log_id="alice<->bob")
-log = Log(storage=storage, signers=sig_pair)
+log = Log(pair, storage)
 
-# Append — payload is any JSON-serializable dict
-entry = log.append({"action": "transfer", "amount": 100, "currency": "USD"})
-print(f"entry {entry.sequence}: {entry.canonical_hash[:16]}...")
-
-# Anchor to XRPL (optional — requires funded wallet)
+# Append — `intent` is required; `params` is any JSON-serializable dict
 entry = log.append(
-    {"action": "settle", "tx_ref": "ext-12345"},
-    anchor_with=wallet_a,  # submits 1-drop Payment with entry hash as memo
+    intent="transfer",
+    params={"amount": 100, "currency": "USD"},
+)
+print(entry.sequence, entry.entry_hash[:16])
+
+# `params` is the payload; `on_chain_tx_hash` records an anchor you already made.
+# See "On-chain anchoring" below — this library does NOT submit transactions.
+entry = log.append(
+    intent="settle",
+    params={"tx_ref": "ext-12345"},
+    on_chain_tx_hash="A1B2C3...F9C3",
 )
 
-# Verify (the library, or anyone with the data + pubkeys)
+# Read back
+print(log.count())               # number of entries
+print(log.latest().intent)       # most recent Entry (or None on an empty log)
+for e in log.replay():           # walk the chain oldest -> newest
+    print(e.sequence, e.intent)
+
+# Verify (returns a VerificationResult, not a bare bool)
 from xrpl_agent_log import verify_chain, verify_signatures, verify_on_chain_anchor
-verify_chain(log)                  # → True
-verify_signatures(log)             # → True
-verify_on_chain_anchor(log, -1)    # → True (verifies last entry's anchor)
+
+result = verify_chain(log)                     # hash chain intact
+assert result.ok, result.errors
+
+result = verify_signatures(log, wallet_a, wallet_b)   # both signatures valid
+assert result.ok, result.errors
+
+result = verify_on_chain_anchor(log, xrpl_client=None)  # anchor matches an on-chain tx
 ```
 
----
+Every verification helper returns a `VerificationResult(ok: bool, errors: list[str])`
+so you get the failure reason, not just `False`.
 
 ## Highlights
 
-- **Three layers of tamper-evidence** — hash chain, mutual signatures, optional on-chain anchor
+- **Three layers of tamper-evidence** — hash chain, mutual signatures, optional on-chain anchor.
+  The library *records* an anchor tx hash you supply and verifies it against the ledger;
+  it does **not** submit the anchor transaction itself. See "On-chain anchoring".
 - **No infrastructure** — pure Python + SQLite + XRPL JSON-RPC
 - **Auditor-friendly** — verify with just public keys + the chain + JSON-RPC
-- **Live-tested on XRPL Testnet** — 44/44 tests passing (43 offline + 1 live)
+- **Live-testable on XRPL Testnet** — 43 offline tests pass by default; the live testnet
+  test is gated behind `RUN_LIVE=1` and self-skips, so a normal run reports
+  `43 passed, 1 skipped`
 - **Honest about limits** — see [SECURITY.md](SECURITY.md) for known issues
 - **SPDX-licensed** — MIT for code, REUSE-compliant metadata
 
@@ -102,7 +125,7 @@ pip install "xrpl_agent_log @ git+https://github.com/DuNorth595/xrpl_agent_log.g
 Or, for the very latest main:
 
 ```bash
-pip install "xrpl_agent_log[dev] @ git+https://github.com/DuNorth595/xrpl_agent_log.git"
+pip install "xrpl_agent_log[dev] @ git+https://github.com/DuNorth595/xrpl_agent_log.git@v0.2.0"
 ```
 
 > **Why no `pip install xrpl_agent_log`?** Both `xrpl_agent_log` and
@@ -131,7 +154,7 @@ pre-commit install   # enables the local seed-scanner hook
 | [docs/03_known_issues.md](docs/03_known_issues.md) | Honest disclosures from live testing |
 | [SESSION_2026-09-30.md](SESSION_2026-09-30.md) | Session log — what shipped, when, why |
 | [SECURITY.md](SECURITY.md) | Security policy, threat model, seed rules |
-| [xrpl_agent_log_TEST_REPORT.pdf](xrpl_agent_log_TEST_REPORT.pdf) | 5-page live testnet report |
+| [docs/02_testing_log.md](docs/02_testing_log.md) | Full test log with live testnet run |
 
 ---
 

@@ -8,7 +8,7 @@ authors = [{name = "Justin Douglas", email = "S_DevLabs@outlook.com"}]
 readme = "README.md"
 keywords = ["xrpl", "agent", "log", "audit", "replay", "xrp-ledger"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",

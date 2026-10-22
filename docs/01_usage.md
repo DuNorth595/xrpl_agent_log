@@ -3,8 +3,8 @@
 ## Concepts
 
 - **`Entry`** — one row in the log. Holds: `sequence`, `payload` (dict),
-  `prev_hash`, `canonical_hash`, `signatures` (party_a, party_b),
-  optional `anchor_tx_hash`, `timestamp`.
+  `parent_hash`, `entry_hash`, `sig_a` / `sig_b`, optional `on_chain_tx_hash`,
+  `timestamp`. (Field names are the real ones — see the `Entry` dataclass below.)
 - **`Log`** — owns a `SQLiteStorage` and a `SigningPair`. The `append()`
   method chains, signs, persists, and (optionally) anchors in one call.
 - **`SigningPair`** — the two parties who sign every entry. Constructed
@@ -38,80 +38,86 @@ guarantee comes from using all three together.
 
 ## API reference
 
+Signatures below are exact — generated from the source, not from prose.
+
 ### `Log`
 
 ```python
-Log(storage: SQLiteStorage, signers: SigningPair) -> Log
+Log(pair: SigningPair, storage: Storage) -> Log
+```
+The constructor is positional: `Log(pair, storage)`.
+
+```python
+append(self, *, intent: 'str', on_chain_tx_hash: 'str | None' = None, params: 'dict[str, Any] | None' = None) -> 'Entry'
+count(self) -> 'int'
+latest(self) -> "'Entry | None'"
+replay(self) -> "'list[Entry]'"
+agent_a_did  # property -> str
+agent_b_did  # property -> str
 ```
 
-#### `log.append(payload: dict, *, anchor_with: Wallet | None = None) -> Entry`
-
-Append one entry. Returns the persisted `Entry` with all fields
-populated.
-
-- `payload` — any JSON-serializable dict. Stored verbatim.
-- `anchor_with` — optional `xrpl.wallet.Wallet`. If provided, submits a
-  1-drop Payment whose memo encodes the entry's `canonical_hash`. The
-  resulting transaction hash is stored in `entry.anchor_tx_hash`.
-  Requires the wallet to be funded (on testnet: use the faucet).
-
-#### `log[i: int | slice] -> Entry | list[Entry]`
-
-Read-only indexed access.
+`append()` is keyword-only: `intent` is required, the rest optional.
 
 ### `SigningPair`
 
 ```python
-SigningPair(party_a: Party, party_b: Party) -> SigningPair
-SigningPair.from_wallets_with_dids(
-    party_a: tuple[Wallet, str],   # (wallet, did)
-    party_b: tuple[Wallet, str],
-) -> SigningPair
+@dataclass
+class SigningPair:
+    wallet_a: Any
+    wallet_b: Any
+    did_a: str
+    did_b: str
+    network: str
 ```
 
-Each `Party` knows its `(wallet, did, public_key_hex)`. The signing
-operation pulls the private key only at sign-time and drops it.
+Constructors: `SigningPair.from_wallets_with_dids(...)`, `SigningPair.from_identities(...)`.
+Each DID must end in the matching wallet's classic address — `attach_signature`
+raises `ValueError` if they do not match.
+
+### `Entry`
+
+```python
+@dataclass
+class Entry:
+    sequence: int
+    parent_hash: str | None
+    agent_a_did: str
+    agent_b_did: str
+    intent: str
+    on_chain_tx_hash: str | None
+    params: dict[str, Any]
+    timestamp: int
+    entry_hash: str
+    sig_a: str
+    sig_b: str
+```
+
+The hash field is `entry_hash`. There is no `canonical_hash`.
 
 ### `SQLiteStorage`
 
 ```python
-SQLiteStorage(path: str | Path, *, log_id: str) -> SQLiteStorage
+SQLiteStorage(self, db_path: 'str | Path', log_id: 'str') -> 'None'
 ```
-
-`log_id` is a namespace — multiple logs can coexist in one SQLite file.
-
-#### `storage.append(entry: Entry) -> None`
-
-Inserts a row. If `(log_id, sequence)` already exists, raises
-`DuplicateSequenceError`. **No UPDATE, no DELETE.**
 
 ### Verification
 
 ```python
-from xrpl_agent_log import (
-    verify_chain,
-    verify_signatures,
-    verify_on_chain_anchor,
-)
+verify_chain(log: "'Log'") -> 'VerificationResult' -> VerificationResult
+verify_signatures(log: "'Log'", wallet_a: 'Wallet', wallet_b: 'Wallet') -> 'VerificationResult' -> VerificationResult
+verify_on_chain_anchor(log: "'Log'", xrpl_client=None) -> 'VerificationResult' -> VerificationResult
 
-verify_chain(log) -> bool
-# Walks every entry, recomputes canonical_hash from payload + prev_hash,
-# confirms each prev_hash equals the previous entry's canonical_hash.
+`VerificationResult(ok: bool, errors: list[str])`. Check `.ok`, read `.errors`.
+There is no `*_with_report()` variant — these already return the report.
 
-verify_signatures(log) -> bool
-# For each entry, checks both party_a and party_b ECDSA signatures
-# against the entry's canonical bytes.
+### On-chain anchoring
 
-verify_on_chain_anchor(log, index: int) -> bool
-# For entry at `index`, performs a JSON-RPC `Tx` lookup against the
-# configured network. Returns True iff the stored `anchor_tx_hash`
-# matches the live ledger AND the memo payload round-trips.
-```
-
-All three return `bool`. For richer error info, use the lower-level
-`*_with_report()` variants that return `(bool, list[Issue])`.
+This library does **not** submit transactions. `append(on_chain_tx_hash=...)`
+records a hash you already produced; `verify_on_chain_anchor()` looks it up
+over JSON-RPC and checks the memo round-trips.
 
 ### CLI
+
 
 ```bash
 python -m xrpl_agent_log --version
@@ -121,7 +127,7 @@ python -m xrpl_agent_log --demo    # 5-entry demo log, all three verify_* layers
 ## What an entry looks like on disk
 
 ```
-sqlite> SELECT sequence, canonical_hash, anchor_tx_hash FROM log WHERE log_id = 'demo';
+sqlite> SELECT sequence, entry_hash, on_chain_tx_hash FROM log WHERE log_id = 'demo';
 0|7f83b1657ff1fc53...|NULL
 1|2c624232cdd22177...|NULL
 2|48a39f28825b90d6...|NULL
@@ -140,7 +146,7 @@ sqlite> SELECT sequence, canonical_hash, anchor_tx_hash FROM log WHERE log_id = 
     "Amount": "1",          // 1 drop, the minimum native amount
     "Memos": [{
       "Memo": {
-        "MemoData": "d18c8b31e6b40d6c..."  // hex-encoded canonical_hash
+        "MemoData": "d18c8b31e6b40d6c..."  // hex-encoded entry_hash
       }
     }]
   }

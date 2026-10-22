@@ -45,7 +45,7 @@ Gated on `RUN_LIVE=1`. Skipped in CI.
 - **Phase 4** — scale (50 entries, all three verify_* layers under 0.4s)
 
 Runs the library's *exact* verification path against real testnet txs.
-See [`xrpl_agent_log_TEST_REPORT.pdf`](../xrpl_agent_log_TEST_REPORT.pdf)
+See [`archive/LIVE_TEST_REPORT.md`](archive/LIVE_TEST_REPORT.md) for the archived run
 for the full 5-page report.
 
 ### Seed scanner
