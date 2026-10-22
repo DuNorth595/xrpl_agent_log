@@ -9,14 +9,14 @@
 [![xrpl-py 4.5+](https://img.shields.io/badge/xrpl--py-4.5+-black.svg)](https://pypi.org/project/xrpl-py/)
 [![SPDX: REUSE](https://img.shields.io/badge/SPDX-REUSE--compliant-brightgreen)](https://reuse.software/)
 [![CI](https://github.com/DuNorth595/xrpl_agent_log/actions/workflows/ci.yml/badge.svg)](https://github.com/DuNorth595/xrpl_agent_log/actions/workflows/ci.yml)
-[![GitHub release](https://img.shields.io/badge/release-v0.2.0-blue)](https://github.com/DuNorth595/xrpl_agent_log/releases)
+[![GitHub release](https://img.shields.io/badge/release-v0.2.1-blue)](https://github.com/DuNorth595/xrpl_agent_log/releases)
 
 ---
 
 ## Cover Page
 
 | **Package:** | `xrpl_agent_log` |
-| **Version:** | 0.2.0 |
+| **Version:** | 0.2.1 |
 | **Author:** | Justin Douglas |
 | **Organization:** | S_DevLabs (Strategic Development Labs) |
 | **Contact:** | S_DevLabs@outlook.com |
