@@ -95,8 +95,8 @@ custody keys.
 
 | Dependency | Why |
 |---|---|
-| `xrpl-py>=4.5.0` | Wallet creation, signing, JSON-RPC client, on-chain tx submission |
-| `xrpl_agent_id>=0.4.0` | DID-based party identity (DIDs are referenced in log metadata) |
+| `xrpl-py>=4.5.0,<5.0` | Wallet creation, signing, JSON-RPC client, on-chain tx submission |
+| `xrpl_agent_id>=0.4.2` | DID-based party identity (DIDs are referenced in log metadata) |
 
 And one optional dependency group:
 
