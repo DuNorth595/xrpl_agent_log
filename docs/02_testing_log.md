@@ -77,7 +77,7 @@ On mainnet, wallets are funded once; per-tx cost is ~12 drops
 
 - Multi-party (3+ signer) logs — see [03_known_issues.md §8](03_known_issues.md#8-v040-roadmap-items-not-yet-shipped)
 - Cross-log verification (linked_ref entries between separate logs)
-- ObservationLog / ProposedLog modes (v0.3.0)
+- ObservationLog / ProposedLog modes (v0.4.0)
 - Local rippled standalone integration test (would replace faucet-bound live test)
 
 ## Running locally

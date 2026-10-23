@@ -4,7 +4,48 @@ All notable changes to `xrpl_agent_log` are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.0] - 2026-10-23
+
+Documentation, packaging, and a dependency correction. No API changes.
+
+### Fixed
+- **The headline claim about on-chain anchoring was untrue.** The tagline and the
+  one-sentence description said the library anchors "via 1-drop Payment
+  transactions." It does not. `src/` contains no `submit`, `submit_and_wait`,
+  `Transaction(`, `Wallet(`, `autofill`, or `Payment(` — there is no code path
+  that constructs, signs, or sends a transaction. `on_chain_tx_hash` is a
+  caller-supplied opaque string: the library stores it, folds it into the entry
+  hash so it is tamper-evident, and can optionally verify it resolves to a real
+  transaction. It does not decide what to anchor, or whether to. The README
+  already said "this library does NOT submit transactions" while pointing at an
+  "On-chain anchoring" section that did not exist; that section is now written.
+- **`__version__` reported the installed metadata instead of the running code.**
+  The module preferred `importlib.metadata` and overwrote `__version__` with
+  it. With an editable install, the installed metadata is stale the moment the
+  source is bumped and before a reinstall, so `__version__` reported the *old*
+  version for the *new* code — a drift report that looks self-consistent, which
+  is the worst direction for it to be wrong in. The source literal is now
+  authoritative and any mismatch raises a `RuntimeWarning` instead of silently
+  substituting the wrong number. (`xrpl_agent_id` had the same bug; both are
+  fixed the same way.)
+- **The `xrpl_agent_id` dependency was pinned to `v0.4.2`**, which predates the
+  five security fixes released in `xrpl_agent_id` v0.4.3. An install of this
+  release now pulls the fixed version.
+
+### Added
+- `docs/ARCHITECTURE.md` — components, hash chain, mutual signing, verification,
+  storage, CLI, and trust boundaries, with every claim traced to a source line.
+  It also records the three behaviours that read as oversights but are
+  deliberate: genesis uses `parent_hash=None`, DIDs match by string suffix
+  rather than being parsed, and a skipped anchor check reports `ok=True`.
+- `docs/README.md` — documentation index.
+- The relationship between `xrpl_agent_id` and `xrpl_agent_log`, which was
+  invisible from either repo.
+
+### Changed
+- Package metadata now carries the org name and org contact address in
+  `authors`, the field pip reads and prints on install.
+- A dangling README link to a session file deleted in `67ee382` was removed.
 
 ## [0.2.1] - 2026-10-22
 
@@ -65,14 +106,16 @@ First public release. **Alpha** — APIs may change before 1.0.0.
 
 ### Known limitations
 - **No PyPI package.** Both `xrpl_agent_id` and `xrpl_agent_log` install from GitHub via `git+https://...` URLs (PyPI account under S_DevLabs@outlook.com not available).
-- **`xrpl_agent_log` requires `xrpl_agent_id` ≥ 0.4.1** installed via `git+https://github.com/DuNorth595/xrpl_agent_id.git@v0.4.1`.
+- **`xrpl_agent_log` requires `xrpl_agent_id` ≥ 0.4.3** installed via `git+https://github.com/DuNorth595/xrpl_agent_id.git@v0.4.3`.
 - Two-party signing only — no N-party witness scheme yet.
 - Single SQLite file per log — no horizontal sharding.
 - MPT-specific anchoring not yet supported (Payment-only).
 
 ### See also
-- Sibling project: [`xrpl_agent_id`](https://github.com/DuNorth595/xrpl_agent_id) v0.4.1.
-- Roadmap: v0.3.0 (ObservationLog + ProposedLog + witness), v0.4.0 multi-party, v0.5.0 cross-log verify, v1.0.0 stable + post-quantum.
+- Sibling project: [`xrpl_agent_id`](https://github.com/DuNorth595/xrpl_agent_id) v0.4.3.
+- Roadmap: v0.4.0 (ObservationLog + ProposedLog + witness), v0.5.0 multi-party, v0.6.0 cross-log verify, v1.0.0 stable + post-quantum.
 
-[Unreleased]: https://github.com/DuNorth595/xrpl_agent_log/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/DuNorth595/xrpl_agent_log/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/DuNorth595/xrpl_agent_log/compare/v0.2.1...v0.3.0
+[0.2.1]: https://github.com/DuNorth595/xrpl_agent_log/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/DuNorth595/xrpl_agent_log/releases/tag/v0.2.0

@@ -43,16 +43,34 @@ from xrpl_agent_log.verify import (
     verify_signatures,
 )
 
-__version__ = "0.2.1"
+__version__ = "0.3.0"
 XRPL_AGENT_LOG_VERSION = __version__  # canonical alias
 
+# The source literal above is authoritative. It is the version of the code
+# that is actually executing.
+#
+# This used to prefer importlib.metadata and overwrite __version__ with it.
+# That inverts the truth: with an editable install, the installed metadata is
+# stale the moment you bump the source and before you reinstall, so
+# __version__ silently reported the OLD version for the NEW code — a drift
+# report that looks self-consistent, which is the worst direction for it to be
+# wrong in. `xrpl_agent_id` had this same bug; both now report the source and
+# make drift LOUD instead of silent.
 try:
     from importlib.metadata import version as _pkg_version
 
     _installed_version = _pkg_version("xrpl_agent_log")
     if _installed_version and _installed_version != __version__:
-        __version__ = _installed_version
-        XRPL_AGENT_LOG_VERSION = _installed_version
+        import warnings as _warnings
+
+        _warnings.warn(
+            f"xrpl_agent_log source version is '{__version__}' but installed package "
+            f"metadata says '{_installed_version}'. Reporting '{__version__}' because "
+            f"that is the code actually running. Reinstall to sync "
+            f"(pip install -e .).",
+            RuntimeWarning,
+            stacklevel=2,
+        )
 except Exception:
     pass
 
