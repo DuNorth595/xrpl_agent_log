@@ -1,5 +1,9 @@
 # xrpl_agent_log
 
+<p align="center">
+  <img src="docs/social-preview.jpg" alt="xrpl_agent_log — social preview" width="600">
+</p>
+
 > **Tamper-evident history log for AI agents on the XRP Ledger.**
 > Append-only, hash-chained, mutually-signed, replayable from public data alone.
 > Anchor references are yours to make; verification is ours.
