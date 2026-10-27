@@ -1,5 +1,9 @@
 # xrpl_agent_log
 
+A **tamper-evident, append-only history log for AI agents** on the XRP Ledger. Hash-chained, mutually-signed, and replayable from public data alone — anchor references are yours to make; verification is ours.
+
+*Keywords: AI agent logging, observability, monitoring, audit log, tamper-evident log, append-only log, hash chain, immutable log, audit trail, event sourcing, agent observability, supply chain audit, integrity verification, XRP Ledger, XRPL, Python.*
+
 <p align="center">
   <img src="docs/social-preview.jpg" alt="xrpl_agent_log — social preview" width="600">
 </p>
