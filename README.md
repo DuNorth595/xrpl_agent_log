@@ -1,16 +1,9 @@
 # xrpl_agent_log
 
-A **tamper-evident, append-only history log for AI agents** on the XRP Ledger. Hash-chained, mutually-signed, and replayable from public data alone — anchor references are yours to make; verification is ours.
-
-*Keywords: AI agent logging, observability, monitoring, audit log, tamper-evident log, append-only log, hash chain, immutable log, audit trail, event sourcing, agent observability, supply chain audit, integrity verification, XRP Ledger, XRPL, Python.*
-
-<p align="center">
-  <img src="docs/social-preview.jpg" alt="xrpl_agent_log — social preview" width="600">
-</p>
-
-> **Tamper-evident history log for AI agents on the XRP Ledger.**
-> Append-only, hash-chained, mutually-signed, replayable from public data alone.
-> Anchor references are yours to make; verification is ours.
+A tamper-evident, append-only history log for AI agents on the XRP Ledger.
+Hash-chained with SHA-256, mutually signed with ECDSA over secp256k1, and
+replayable from public ledger data alone — you make the anchors, this library
+verifies them.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
@@ -19,31 +12,31 @@ A **tamper-evident, append-only history log for AI agents** on the XRP Ledger. H
 [![CI](https://github.com/DuNorth595/xrpl_agent_log/actions/workflows/ci.yml/badge.svg)](https://github.com/DuNorth595/xrpl_agent_log/actions/workflows/ci.yml)
 [![GitHub release](https://img.shields.io/badge/release-v0.3.0-blue)](https://github.com/DuNorth595/xrpl_agent_log/releases)
 
+<p align="center">
+  <img src="docs/social-preview.jpg" alt="xrpl_agent_log — social preview" width="600">
+</p>
+
 ---
 
-## Cover Page
+## What this is
 
-| **Package:** | `xrpl_agent_log` |
-| **Version:** | 0.3.0 |
-| **Author:** | Justin Douglas |
-| **Organization:** | S_DevLabs (Strategic Development Labs) |
-| **Contact:** | S_DevLabs@outlook.com |
-| **License:** | MIT |
-| **Python:** | ≥ 3.9 |
-| **Dependencies:** | `xrpl-py` ≥ 4.5.0, [`xrpl_agent_id`](https://github.com/DuNorth595/xrpl_agent_id) ≥ 0.4.3 (installed from GitHub — not on PyPI yet) |
-| **Optional extras:** | `dev` (pytest + pre-commit) |
+A small Python library for recording what AI agents did, in a form that cannot
+be edited afterwards without detection.
 
-**What this is in one sentence:**
-A small Python library that gives AI agents a tamper-evident history log —
-append-only entries, hash-chained via SHA-256, mutually-signed by both
-parties with ECDSA over secp256k1. Entries may reference an XRPL transaction
-hash you submitted yourself; the library verifies that reference against public
-ledger data but never submits a transaction.
+Three layers of tamper-evidence, each independently checkable:
 
-**What this is NOT:**
-A key-management system, a wallet, a privacy layer, or a replacement for
-SIEM tools. Logs are public-by-design (anchors are). Bring your own keys.
-Use `xrpl-py`'s `Wallet`.
+1. **Hash chain** — each entry commits to the one before it. Editing entry 3
+   breaks every hash after it.
+2. **Mutual signatures** — both parties sign each record. Neither can rewrite
+   history unilaterally, and neither can produce a record the other never saw.
+3. **Optional on-chain anchor** — you point at an XRPL transaction you already
+   submitted. This library verifies the reference against public ledger data.
+
+**Not** a key-management system, wallet, privacy layer, or replacement for a
+SIEM. Anchors are public by design. Bring your own keys — use `xrpl-py`'s
+`Wallet`.
+
+**Status:** v0.3.0, MIT, testnet-verified.
 
 ---
 
@@ -57,7 +50,7 @@ from xrpl_agent_log import Log, SigningPair, SQLiteStorage
 wallet_a = Wallet.create()   # In production: load from secure storage
 wallet_b = Wallet.create()
 
-# A signing pair is the mutual-attestation identity of the two parties
+# A signing pair is the mutual-attestation identity of the two parties.
 # The DID must end in the matching wallet's classic address — the library
 # enforces this on every signature and raises ValueError otherwise.
 pair = SigningPair(
@@ -68,7 +61,6 @@ pair = SigningPair(
     network="testnet",
 )
 
-# Open the log (append-only SQLite)
 storage = SQLiteStorage("agent_history.db", log_id="alice<->bob")
 log = Log(pair, storage)
 
@@ -79,84 +71,26 @@ entry = log.append(
 )
 print(entry.sequence, entry.entry_hash[:16])
 
-# `params` is the payload; `on_chain_tx_hash` records an anchor you already made.
-# See "On-chain anchoring" below — this library does NOT submit transactions.
-entry = log.append(
-    intent="settle",
-    params={"tx_ref": "ext-12345"},
-    on_chain_tx_hash="A1B2C3...F9C3",
-)
-
 # Read back
 print(log.count())               # number of entries
 print(log.latest().intent)       # most recent Entry (or None on an empty log)
 for e in log.replay():           # walk the chain oldest -> newest
     print(e.sequence, e.intent)
 
-# Verify (returns a VerificationResult, not a bare bool)
+# Verify — every helper returns a VerificationResult, not a bare bool
 from xrpl_agent_log import verify_chain, verify_signatures, verify_on_chain_anchor
 
-result = verify_chain(log)                     # hash chain intact
+result = verify_chain(log)
 assert result.ok, result.errors
 
-result = verify_signatures(log, wallet_a, wallet_b)   # both signatures valid
+result = verify_signatures(log, wallet_a, wallet_b)
 assert result.ok, result.errors
-
-result = verify_on_chain_anchor(log, xrpl_client=None)  # anchor matches an on-chain tx
 ```
 
-Every verification helper returns a `VerificationResult(ok: bool, errors: list[str])`
+Every verification helper returns `VerificationResult(ok: bool, errors: list[str])`
 so you get the failure reason, not just `False`.
 
-## Highlights
-
-- **Three layers of tamper-evidence** — hash chain, mutual signatures, optional on-chain anchor.
-  The library *records* an anchor tx hash you supply and verifies it against the ledger;
-  it does **not** submit the anchor transaction itself. See "On-chain anchoring".
-- **No infrastructure** — pure Python + SQLite + XRPL JSON-RPC
-- **Auditor-friendly** — verify with just public keys + the chain + JSON-RPC
-- **Live-testable on XRPL Testnet** — 43 offline tests pass by default; the live testnet
-  test is gated behind `RUN_LIVE=1` and self-skips, so a normal run reports
-  `43 passed, 1 skipped`
-- **Honest about limits** — see [SECURITY.md](SECURITY.md) for known issues
-- **SPDX-licensed** — MIT for code, REUSE-compliant metadata
-
 ---
-
-## Install
-
-```bash
-# Install xrpl_agent_log — pulls xrpl_agent_id from GitHub automatically
-# (xrpl_agent_id is not on PyPI yet; see pyproject.toml)
-pip install "xrpl_agent_log @ git+https://github.com/DuNorth595/xrpl_agent_log.git@v0.3.0"
-```
-
-Or, for the very latest main:
-
-```bash
-pip install "xrpl_agent_log[dev] @ git+https://github.com/DuNorth595/xrpl_agent_log.git@v0.3.0"
-```
-
-> **Why no `pip install xrpl_agent_log`?** Both `xrpl_agent_log` and
-> `xrpl_agent_id` is published via GitHub, not PyPI. Install from source.
-> Once both reach PyPI, `pip install xrpl_agent_log` will work.
-> Until then, install via `git+https://...`.
-
-For development (test + pre-commit):
-
-```bash
-git clone https://github.com/DuNorth595/xrpl_agent_log.git
-cd xrpl_agent_log
-pip install -e ".[dev]"
-pre-commit install   # enables the local seed-scanner hook
-```
-
----
-
-> **Repository layout:** this package uses a `src/` layout, while the companion
-> [`xrpl_agent_id`](https://github.com/DuNorth595/xrpl_agent_id) uses a flat layout.
-> Both are standard Python packaging and both install correctly — only the source
-> directory location differs.
 
 ## On-chain anchoring
 
@@ -212,9 +146,50 @@ at a point in ledger history. It does **not** publish entry contents — the
 `params` payload stays wherever your storage is. Entries carrying an anchor are
 public by design.
 
-> `verify_on_chain_anchor(log, client=None)` returns `ok=True` when no client is
-> passed. A skipped check is not a passing check. If you need anchors verified,
-> pass a client.
+> `verify_on_chain_anchor(log, client=None)` returns `ok=True` when no client
+> is passed. A skipped check is not a passing check. If you need anchors
+> verified, pass a client.
+
+---
+
+## Comparing approaches
+
+Other ways to get tamper-evident agent execution records, and how this library
+relates to them. Not a scoreboard — XAIP is a serious project with a different
+design center.
+
+> **Data as of 2026-10-27.** Star counts, forks, licenses, and last-push dates
+> below were read from the GitHub API on that date and will drift. The
+> *descriptions* — what each project actually does — are the durable part.
+
+| Project | What it does | Language | License | Notes | Last push |
+|---|---|---|---|---|---|
+| **`xrpl_agent_log`** (this) | Two-party mutual attestation: hash-chained entries, both parties sign each record, optional XRPL anchor | Python | MIT | Peer-to-peer — a log is *between* two agents. Verification needs only public keys and the chain | active |
+| [`xaip-protocol`](https://github.com/xkumakichi/xaip-protocol) | Provider-neutral execution evidence — co-signed receipts (agent and caller both sign) | TypeScript | MIT | Closest in spirit and in the co-signing model. Chain-agnostic; SDK, aggregator, MCP servers, conformance vectors. Supports `did:xrpl` as one optional identity | 2026-07-30 |
+| [`novatechflow/lucendex`](https://github.com/novatechflow/lucendex) | Deterministic DEX infrastructure for XRPL with "compliance-grade audit trails" | Go | MIT | **Archived.** Audit trails are one feature of a broader DEX product | 2026-10-21 |
+| XRPL `SourceTag` + `Memo` | 32-bit submitter-set tag plus free-form memo | — | XRPL protocol | Ripple's guidance says to audit an agent's spend by **filtering by the agent's account, not by tag** — nothing binds a tag to a signing agent | live |
+| Ripple Custody (Vault) | Merkle tree over trusted entities, notary-signed root per state change, anti-rewind file, per-entity signatures | — | proprietary | Not an XRPL-native library — a commercial platform. Its architecture is the reference design for tamper-evident custody | live |
+| Conventional off-chain logging (Postgres, SIEM) | Centralized application logs with retention and access controls | — | varies | The incumbent for compliance work — central trust anchor, records only as durable as the host | n/a |
+
+### What the table actually says
+
+- **XAIP is the project to look at first.** It co-signs execution receipts the
+  same way, and it is more developed — SDK, aggregator, MCP servers, and
+  conformance CI. Its center of gravity is *provider-neutral* execution
+  evidence; this library's is *XRPL-native* mutual attestation with optional
+  on-chain anchoring.
+- **The built-in XRPL mechanism is not an audit trail.** Ripple's own
+  agent-payment guidance says to audit an agent's spend by filtering by the
+  agent's **account**, not by tag. `SourceTag` is a submitter-set integer, so
+  nothing binds a tag to a signing agent — and nothing binds an identity to the
+  transactions it signs.
+- **Centralized logging remains the incumbent for compliance.** It is what
+  auditors expect and what operations teams can actually query. The trade-off
+  is a trust anchor: the records are only as good as the host and the operator
+  holding them.
+- **What this library offers instead** is a record whose integrity can be
+  re-derived by anyone from public data, with no trust in the logging host and
+  no operator who can quietly alter it.
 
 ---
 
@@ -241,16 +216,62 @@ want identity as well as history.
 
 ---
 
+## Install
+
+Neither `xrpl_agent_log` nor `xrpl_agent_id` is published to PyPI. Install from
+source:
+
+```bash
+# Install xrpl_agent_log — pulls xrpl_agent_id from GitHub automatically
+pip install "xrpl_agent_log @ git+https://github.com/DuNorth595/xrpl_agent_log.git@v0.3.0"
+```
+
+For development (test + pre-commit):
+
+```bash
+git clone https://github.com/DuNorth595/xrpl_agent_log.git
+cd xrpl_agent_log
+pip install -e ".[dev]"
+pre-commit install   # enables the local seed-scanner hook
+```
+
+---
+
+## Highlights
+
+- **Three layers of tamper-evidence** — hash chain, mutual signatures, optional
+  on-chain anchor. The library *records* an anchor tx hash you supply and
+  verifies it against the ledger; it does **not** submit the anchor transaction
+  itself.
+- **No infrastructure** — pure Python + SQLite + XRPL JSON-RPC.
+- **Auditor-friendly** — verify with just public keys, the chain, and JSON-RPC.
+- **Live-testable on XRPL Testnet** — 43 offline tests pass by default; the
+  live testnet test is gated behind `RUN_LIVE=1` and self-skips, so a normal
+  run reports `43 passed, 1 skipped` *(verified against v0.3.0 on
+  2026-10-27)*.
+- **Honest about limits** — see [SECURITY.md](SECURITY.md) and
+  [`docs/03_known_issues.md`](docs/03_known_issues.md) for known issues.
+
+---
+
 ## Documentation
 
 | Doc | Purpose |
 |---|---|
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How the hash chain, signing, and anchoring actually work |
-| [docs/00_executive_summary.md](docs/00_executive_summary.md) | One-page pitch |
-| [docs/01_usage.md](docs/01_usage.md) | API reference + examples |
-| [docs/02_testing_log.md](docs/02_testing_log.md) | Test layout, what each layer proves |
-| [docs/03_known_issues.md](docs/03_known_issues.md) | Honest disclosures from live testing |
-| [SECURITY.md](SECURITY.md) | Security policy, threat model, seed rules |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | How the hash chain, signing, and anchoring actually work |
+| [`docs/00_executive_summary.md`](docs/00_executive_summary.md) | One-page pitch |
+| [`docs/01_usage.md`](docs/01_usage.md) | API reference + examples |
+| [`docs/02_testing_log.md`](docs/02_testing_log.md) | Test layout and what each layer proves |
+| [`docs/03_known_issues.md`](docs/03_known_issues.md) | Honest disclosures from live testing |
+| [`SECURITY.md`](SECURITY.md) | Security policy, threat model, seed rules |
+
+---
+
+## Related projects
+
+- [`xrpl_agent_id`](https://github.com/DuNorth595/xrpl_agent_id) — companion library: agent identity and authorization on XRPL
+- [`xaip-protocol`](https://github.com/xkumakichi/xaip-protocol) — provider-neutral execution evidence for agent tool calls
+- [`xrpl-py`](https://github.com/XRPLF/xrpl-py) — the Python client this wraps
 
 ---
 
@@ -258,4 +279,31 @@ want identity as well as history.
 
 MIT — see [LICENSE](LICENSE).
 
+```
+SPDX-FileCopyrightText: 2026 Justin Douglas
 SPDX-License-Identifier: MIT
+```
+
+**Author:** Justin Douglas — design, implementation, and stewardship.
+
+**Built with Sam Intelligence** — an AI coding assistant (Hermes Agent, Nous
+Research) that contributed to implementation, documentation, and architecture
+under direct human supervision. All design decisions, specification
+interpretations, and final commits were reviewed and approved by Justin
+Douglas.
+
+**Built on the shoulders of:** [Wietse Wind](https://github.com/WietseWind) and
+`xrpl-py`; the [XRPL Foundation](https://xrpl.org/) for the ledger primitives;
+and [Ripple Custody](https://ripple.com/) for the Merkle-tree-plus-anti-rewind
+architecture that this design follows.
+
+**How to cite:**
+
+```bibtex
+@software{xrpl_agent_log_2026,
+  author = {Douglas, Justin},
+  title = {xrpl_agent_log: Tamper-evident agent history on the XRP Ledger},
+  year = {2026},
+  url = {https://github.com/DuNorth595/xrpl_agent_log}
+}
+```
