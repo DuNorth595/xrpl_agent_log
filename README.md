@@ -7,7 +7,7 @@ verifies them.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![xrpl-py 4.5+](https://img.shields.io/badge/xrpl--py-4.5+-black.svg)](https://pypi.org/project/xrpl-py/)
+[![xrpl-py 5.0+](https://img.shields.io/badge/xrpl--py-5.0+-black.svg)](https://pypi.org/project/xrpl-py/)
 [![SPDX: REUSE](https://img.shields.io/badge/SPDX-REUSE--compliant-brightgreen)](https://reuse.software/)
 [![CI](https://github.com/DuNorth595/xrpl_agent_log/actions/workflows/ci.yml/badge.svg)](https://github.com/DuNorth595/xrpl_agent_log/actions/workflows/ci.yml)
 [![GitHub release](https://img.shields.io/badge/release-v0.3.1-blue)](https://github.com/DuNorth595/xrpl_agent_log/releases)
@@ -46,7 +46,7 @@ Three layers of tamper-evidence, each independently checkable:
 SIEM. Anchors are public by design. Bring your own keys — use `xrpl-py`'s
 `Wallet`.
 
-**Status:** v0.3.0, MIT, testnet-verified.
+**Status:** v0.3.1, MIT, testnet-verified.
 
 ---
 
@@ -299,44 +299,6 @@ explicit signer for that side.
 (`>=5.0,<6`). Installing them together therefore resolves to
 `xrpl_agent_id` v0.5.1 and `xrpl-py` 5.x — an earlier pin of
 `xrpl-py<5.0` here made pip silently downgrade `xrpl_agent_id` to v0.4.3.
-
----
-
-## Install
-
-Neither `xrpl_agent_log` nor `xrpl_agent_id` is published to PyPI. Install from
-source:
-
-```bash
-# Install xrpl_agent_log — pulls xrpl_agent_id from GitHub automatically
-pip install "xrpl_agent_log @ git+https://github.com/DuNorth595/xrpl_agent_log.git@v0.3.0"
-```
-
-For development (test + pre-commit):
-
-```bash
-git clone https://github.com/DuNorth595/xrpl_agent_log.git
-cd xrpl_agent_log
-pip install -e ".[dev]"
-pre-commit install   # enables the local seed-scanner hook
-```
-
----
-
-## Highlights
-
-- **Three layers of tamper-evidence** — hash chain, mutual signatures, optional
-  on-chain anchor. The library *records* an anchor tx hash you supply and
-  verifies it against the ledger; it does **not** submit the anchor transaction
-  itself.
-- **No infrastructure** — pure Python + SQLite + XRPL JSON-RPC.
-- **Auditor-friendly** — verify with just public keys, the chain, and JSON-RPC.
-- **Live-testable on XRPL Testnet** — 48 offline tests pass by default; the
-  live testnet test is gated behind `RUN_LIVE=1` and self-skips, so a normal
-  run reports `48 passed, 1 skipped` *(verified against v0.3.0 on
-  2026-10-27)*.
-- **Honest about limits** — see [SECURITY.md](SECURITY.md) and
-  [`docs/03_known_issues.md`](docs/03_known_issues.md) for known issues.
 
 ---
 

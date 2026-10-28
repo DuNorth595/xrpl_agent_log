@@ -75,17 +75,21 @@ def _live_gated_count() -> int:
 def test_documented_offline_count_is_current() -> None:
     """Every document quoting an offline test count must quote the real one.
 
-    The count is the number of tests in the library's own suite -- the
-    tests that exercise the library -- excluding this guard file and
-    excluding the ones gated behind RUN_LIVE.
+    The count is what a reader sees when they run pytest: every test
+    that passes by default, minus the one gated behind RUN_LIVE.
 
-    Excluding this file is deliberate and permanent. If the guard
-    counted itself, then adding a check to the guard would change the
-    number the documents quote, and the guard would fail every time
-    someone extended it. The number that matters is the size of the
-    library's test suite, and that is stable.
+    This file's own tests count. They run, they pass, and a reader
+    running the suite sees them -- so the documented number includes
+    them. The one thing excluded is the live testnet test, which
+    self-skips without RUN_LIVE=1.
+
+    The alternative -- excluding this file so the figure never moves --
+    was rejected: it would make the documented number disagree with
+    what pytest actually prints, which is worse than a number that has
+    to be updated when a test is added. The guard exists to catch that
+    update being forgotten, not to avoid it.
     """
-    expected = _offline_test_count() - _live_gated_count() - _own_test_count()
+    expected = _offline_test_count() - _live_gated_count()
 
     docs = {
         "README.md": r"(\d+) offline tests pass",

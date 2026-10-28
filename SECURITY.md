@@ -95,7 +95,7 @@ custody keys.
 
 | Dependency | Why |
 |---|---|
-| `xrpl-py>=4.5.0,<5.0` | Wallet creation, signing, JSON-RPC client, on-chain tx submission |
+| `xrpl-py>=5.0,<6` | Wallet creation, signing, JSON-RPC client, on-chain tx submission |
 | `xrpl_agent_id>=0.4.2` | DID-based party identity (DIDs are referenced in log metadata) |
 
 And one optional dependency group:
@@ -119,7 +119,9 @@ None are blockers — all are documented so users know what to expect.
    the ledger) comes back as `{"result": {"error": "txnNotFound", ...}}`
    rather than as a Python exception. `verify_on_chain_anchor` was
    updated to detect this envelope explicitly. Future xrpl-py versions
-   may change the envelope shape — pinned to `>=4.5.0,<5.0` until v0.3.0.
+   may change the envelope shape. This package pins `xrpl-py>=5.0,<6`, the
+    same range `xrpl_agent_id` v0.5.x requires, so the two resolve
+    together.
 
 2. **XRPL rejects 0-XRP Payments on the native payment engine.** Anchor
    txs use 1 drop (`0.000001 XRP`) — the minimum representable native

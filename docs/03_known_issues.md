@@ -4,10 +4,11 @@ This document captures every honest finding from live XRPL testnet
 verification of `xrpl_agent_log` v0.2.0. **None are blockers** — all are
 documented so users know what to expect.
 
-## 1. xrpl-py 4.x returns rippled error envelopes in JSON-RPC results
+## 1. xrpl-py returns rippled error envelopes in JSON-RPC results
 
 **Severity:** Medium
-**Status:** Mitigated in v0.2.0; pinning to `xrpl-py>=4.5.0,<5.0`
+**Status:** Mitigated in v0.2.0; the envelope handling is unchanged in
+xrpl-py 5.x
 
 A `txnNotFound` (anchor tx doesn't exist on the ledger) comes back as
 `{"result": {"error": "txnNotFound", "error_code": 28, ...}}` rather than
@@ -119,8 +120,9 @@ If you add production seed-like strings to tests, move them to
 - **Key management.** We don't custody keys. Use `xrpl-py`'s `Wallet`
   (or a future KMS wrapper) and pass it in.
 - **Ledger fallback if xrpl-py changes.** We're pinned to
-  `xrpl-py>=4.5.0,<5.0`. A v5.0 release will require a minor version
-  bump here.
+  `xrpl-py>=5.0,<6` — the same range `xrpl_agent_id` v0.5.x requires, so
+  the two packages resolve together. A future xrpl-py 6.x will require a
+  minor version bump here.
 - **Performance tuning.** SQLite is fine for thousands of entries; for
   millions, swap `SQLiteStorage` for a custom backend (the interface is
   stable).

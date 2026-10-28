@@ -14,7 +14,7 @@
 
 ## What each layer proves
 
-### Local pytest (45 tests))
+### Local pytest (48 tests)))
 
 - Entry serialization is canonical (same payload → same hash)
 - Hash chain detects single-byte mutations
@@ -83,7 +83,7 @@ On mainnet, wallets are funded once; per-tx cost is ~12 drops
 ## Running locally
 
 ```bash
-# Local pytest (46 tests, ~2s)
+# Local pytest (48 tests), ~2s)
 python -m pytest tests/ -v
 
 # Live testnet pytest (1 test, ~18s; needs network + faucet access)
