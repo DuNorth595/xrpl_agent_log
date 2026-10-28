@@ -30,7 +30,7 @@ be edited afterwards without detection.
 | **Contact:** | S_DevLabs@outlook.com |
 | **License:** | MIT |
 | **Python:** | ≥ 3.10 |
-| **Dependencies:** | `xrpl-py` ≥ 5.0, [`xrpl_agent_id`](https://github.com/DuNorth595/xrpl_agent_id) ≥ 0.5.1 (installed from GitHub — not on PyPI yet) |
+| **Dependencies:** | `xrpl-py` ≥ 5.0, [`xrpl_agent_id`](https://github.com/DuNorth595/xrpl_agent_id) ≥ 0.5.2 (installed from GitHub — not on PyPI yet) |
 | **Optional extras:** | `dev` (pytest + pre-commit) |
 
 Three layers of tamper-evidence, each independently checkable:
