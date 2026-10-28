@@ -46,6 +46,11 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+# PEP 561 marker: tells mypy and pyright the package ships its own
+# annotations, so they read them instead of falling back to Any.
+xrpl_agent_log = ["py.typed"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra --strict-markers"
