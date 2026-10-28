@@ -10,7 +10,7 @@ verifies them.
 [![xrpl-py 5.0+](https://img.shields.io/badge/xrpl--py-5.0+-black.svg)](https://pypi.org/project/xrpl-py/)
 [![SPDX: REUSE](https://img.shields.io/badge/SPDX-REUSE--compliant-brightgreen)](https://reuse.software/)
 [![CI](https://github.com/DuNorth595/xrpl_agent_log/actions/workflows/ci.yml/badge.svg)](https://github.com/DuNorth595/xrpl_agent_log/actions/workflows/ci.yml)
-[![GitHub release](https://img.shields.io/badge/release-v0.3.1-blue)](https://github.com/DuNorth595/xrpl_agent_log/releases)
+[![GitHub release](https://img.shields.io/badge/release-v0.4.0-blue)](https://github.com/DuNorth595/xrpl_agent_log/releases)
 
 <p align="center">
   <img src="docs/social-preview.jpg" alt="xrpl_agent_log — social preview" width="600">
@@ -24,7 +24,7 @@ A small Python library for recording what AI agents did, in a form that cannot
 be edited afterwards without detection.
 
 | **Package:** | `xrpl_agent_log` |
-| **Version:** | 0.3.1 |
+| **Version:** | 0.4.0 |
 | **Author:** | Justin Douglas |
 | **Organization:** | S_DevLabs (Strategic Development Labs) |
 | **Contact:** | S_DevLabs@outlook.com |
@@ -42,11 +42,45 @@ Three layers of tamper-evidence, each independently checkable:
 3. **Optional on-chain anchor** — you point at an XRPL transaction you already
    submitted. This library verifies the reference against public ledger data.
 
+### Detecting truncation
+
+A hash chain proves the *contents* were not edited. On its own it cannot
+prove that nothing was *removed* — a log with its tail cut off verifies
+exactly as well as an intact one, because the chain is only checked inward
+from the entries that are present.
+
+Two things close that gap, and both are opt-in:
+
+```python
+from xrpl_agent_log import verify_chain, verify_on_chain_anchor
+
+# Supply the head you expect. Get it from somewhere the attacker cannot
+# reach — a value published elsewhere, or a copy the other party keeps.
+result = verify_chain(log, expected_head=head_you_hold)
+
+# Say how many anchors the log should have. Without this, a log whose
+# anchored entry was deleted reports a clean pass, because there is
+# nothing left to check.
+result = verify_on_chain_anchor(
+    log, client, expect_anchors=1, expected_anchor_hash=anchor_you_hold
+)
+```
+
+The SQLite backend also records the head hash on every append, so
+`verify_chain(log)` with no arguments catches truncation by anything that
+can only delete rows. That recorded head is a local memory, not an
+external guarantee — an attacker who can rewrite it can still hide a
+truncation, which is why `expected_head` exists.
+
+The limitation, the attacks that reproduce it, and what each mitigation
+covers are written up in
+[`docs/04_truncation_and_anchors.md`](docs/04_truncation_and_anchors.md).
+
 **Not** a key-management system, wallet, privacy layer, or replacement for a
 SIEM. Anchors are public by design. Bring your own keys — use `xrpl-py`'s
 `Wallet`.
 
-**Status:** v0.3.1, MIT, testnet-verified.
+**Status:** v0.4.0, MIT, testnet-verified.
 
 ---
 
@@ -107,9 +141,9 @@ so you get the failure reason, not just `False`.
   it does **not** submit the anchor transaction itself. See "On-chain anchoring".
 - **No infrastructure** — pure Python + SQLite + XRPL JSON-RPC
 - **Auditor-friendly** — verify with just public keys + the chain + JSON-RPC
-- **Live-testable on XRPL Testnet** — 50 offline tests pass by default; the live testnet
+- **Live-testable on XRPL Testnet** — 60 offline tests pass by default; the live testnet
   test is gated behind `RUN_LIVE=1` and self-skips, so a normal run reports
-  `50 passed, 1 skipped`
+  `60 passed, 1 skipped`
 - **Honest about limits** — see [SECURITY.md](SECURITY.md) for known issues
 - **SPDX-licensed** — MIT for code, REUSE-compliant metadata
 
@@ -120,13 +154,13 @@ so you get the failure reason, not just `False`.
 ```bash
 # Install xrpl_agent_log — pulls xrpl_agent_id from GitHub automatically
 # (xrpl_agent_id is not on PyPI yet; see pyproject.toml)
-pip install "xrpl_agent_log @ git+https://github.com/DuNorth595/xrpl_agent_log.git@v0.3.1"
+pip install "xrpl_agent_log @ git+https://github.com/DuNorth595/xrpl_agent_log.git@v0.4.0"
 ```
 
 Or, for the very latest main:
 
 ```bash
-pip install "xrpl_agent_log[dev] @ git+https://github.com/DuNorth595/xrpl_agent_log.git@v0.3.1"
+pip install "xrpl_agent_log[dev] @ git+https://github.com/DuNorth595/xrpl_agent_log.git@v0.4.0"
 ```
 
 > **Why no `pip install xrpl_agent_log`?** Both `xrpl_agent_log` and

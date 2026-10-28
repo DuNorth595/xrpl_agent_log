@@ -130,3 +130,19 @@ If you add production seed-like strings to tests, move them to
 ---
 
 *Last updated 2026-09-30 — reflects v0.2.0 working implementation.*
+
+## 5. A local hash chain cannot detect truncation on its own
+
+**Severity:** Medium (design limitation, now mitigated)
+**Status:** Mitigated in v0.4.0; see `04_truncation_and_anchors.md`
+
+`verify_chain()` checks entries inward from whatever is present, so it
+detects *editing* but not *removal*. A log whose tail was truncated
+verified cleanly before v0.4.0, as did a log whose only anchored entry
+had been deleted.
+
+v0.4.0 adds two opt-in mitigations — `verify_chain(log, expected_head=...)`
+and `verify_on_chain_anchor(log, client, expect_anchors=N)` — plus a
+recorded head in the SQLite backend. The full write-up, including what
+remains uncovered against a storage-level attacker, is in
+`04_truncation_and_anchors.md`.

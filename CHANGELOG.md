@@ -4,6 +4,45 @@ All notable changes to `xrpl_agent_log` are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] — 2026-10-28
+
+Truncation resistance. The library could previously verify a log whose
+tail had been removed, or whose only anchored entry had been deleted.
+
+### Added
+
+- **`verify_chain(log, expected_head=...)`** — supply the head hash the log
+  is expected to end at. Detects truncation of any kind, because the
+  expectation comes from outside the log.
+- **`verify_on_chain_anchor(log, client, expect_anchors=N)`** — state how
+  many anchored entries the log should have. A log whose anchored entry
+  was deleted previously reported a clean pass.
+- **`verify_on_chain_anchor(log, client, expected_anchor_hash=...)`** —
+  state which anchor the log should contain. Detects a substituted anchor.
+- **`SQLiteStorage.recorded_head()`** — the head hash is now written on
+  every append, in the same transaction as the entry. `verify_chain(log)`
+  with no arguments therefore detects truncation by anything that can only
+  delete rows.
+- `Storage.recorded_head()` on the abstract base class, so custom backends
+  can participate.
+
+### Documented
+
+- `docs/04_truncation_and_anchors.md` — the finding, the attacks that
+  reproduce it, what each mitigation covers, and what remains uncovered
+  against a storage-level attacker.
+- `docs/03_known_issues.md` item 5.
+
+### Tests
+
+Ten adversarial tests in `tests/test_truncation_resistance.py`. Each
+reproduces an attack that passed verification before this release.
+
+### Compatibility
+
+Additive and backwards-compatible. The new parameters are optional, and
+an existing caller gets the previous behaviour.
+
 ## [0.3.1] - 2026-10-28
 
 Dependency compatibility with `xrpl_agent_id` v0.5.x, and one API change

@@ -1,6 +1,6 @@
 [project]
 name = "xrpl_agent_log"
-version = "0.3.1"
+version = "0.4.0"
 description = "Tamper-evident history log for AI agents on the XRP Ledger — append-only, signed-by-both-parties, replayable"
 requires-python = ">=3.10"
 license = {text = "MIT"}

@@ -41,6 +41,27 @@ class Storage(ABC):
     def all_entries(self) -> "list[Entry]":
         """Return all entries in sequence order. Read-only."""
 
+    def recorded_head(self) -> "str | None":
+        """The head hash this storage last committed, or None if empty.
+
+        A hash chain verified inward from whatever is present cannot detect
+        truncation -- a shorter log looks exactly like an intact one. The
+        recorded head is the storage's own memory of how long the log was,
+        so a truncation that removes entries from the tail leaves the
+        recorded head ahead of the actual last entry.
+
+        This is a *local* memory of the head. An attacker who truncates
+        the log and then rewrites the recorded head can still hide it, which
+        is why `verify_chain` also accepts an `expected_head` that the
+        caller holds independently.
+
+        The default implementation derives the head from the entries
+        themselves, which detects nothing. Backends that can store it
+        should override this.
+        """
+        latest = self.latest()
+        return latest.entry_hash if latest is not None else None
+
     @abstractmethod
     def close(self) -> None:
         """Release any underlying resources."""

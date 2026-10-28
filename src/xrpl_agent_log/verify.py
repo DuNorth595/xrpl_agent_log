@@ -39,8 +39,27 @@ class VerificationResult:
         return self.ok
 
 
-def verify_chain(log: "Log") -> VerificationResult:
-    """Walk the log in sequence order; check each entry's hash and parent link."""
+def verify_chain(
+    log: "Log",
+    expected_head: str | None = None,
+) -> VerificationResult:
+    """Walk the log in sequence order; check each entry's hash and parent link.
+
+    Args:
+        log: the log to verify.
+        expected_head: the head hash the log is expected to end at, if the
+            caller knows it. Supplying this detects **truncation** -- a log
+            whose tail was removed still verifies internally, because the
+            chain is only checked inward from the entries present.
+
+            Get this from somewhere the attacker cannot reach: a value
+            published elsewhere, an on-chain anchor, or a copy kept by
+            the other party.
+
+    Without `expected_head`, the storage's own recorded head is used as a
+    fallback. That catches truncation by a process that can only delete
+    rows, but not by one that can also rewrite the recorded head.
+    """
     errors: list[str] = []
     entries = log.storage.all_entries()
 
@@ -83,7 +102,55 @@ def verify_chain(log: "Log") -> VerificationResult:
         expected_parent = e.entry_hash
         expected_seq += 1
 
+    errors.extend(_truncation_errors(log, entries, expected_head))
+
     return VerificationResult(ok=len(errors) == 0, errors=errors)
+
+
+def _truncation_errors(
+    log: "Log",
+    entries: list,
+    expected_head: str | None,
+) -> list[str]:
+    """Detect a log whose tail was removed.
+
+    Two independent sources of truth, in priority order:
+
+    1. `expected_head` -- what the caller believes the head to be.
+    2. The storage's recorded head -- the storage's own memory of how
+       long the log was.
+
+    Either one, if it disagrees with the actual last entry, means entries
+    were removed.
+    """
+    errors: list[str] = []
+
+    if expected_head is None:
+        expected_head = log.storage.recorded_head()
+
+    if expected_head is None:
+        # Nothing to compare against -- an empty log, or a storage backend
+        # that does not record a head. Nothing to detect.
+        return errors
+
+    actual_head = entries[-1].entry_hash if entries else None
+
+    if actual_head == expected_head:
+        return errors
+
+    if actual_head is None:
+        errors.append(
+            "Log is empty but a head hash was expected: "
+            f"{expected_head[:16]}... -- the log was truncated"
+        )
+        return errors
+
+    errors.append(
+        f"Head hash mismatch: expected {expected_head[:16]}..., "
+        f"log ends at {actual_head[:16]}... -- the log was truncated "
+        f"or the head was rewritten"
+    )
+    return errors
 
 
 def verify_signatures(
@@ -110,18 +177,54 @@ def verify_signatures(
 def verify_on_chain_anchor(
     log: "Log",
     xrpl_client=None,
+    *,
+    expect_anchors: int | None = None,
+    expected_anchor_hash: str | None = None,
 ) -> VerificationResult:
     """Optional check: every entry's on_chain_tx_hash, if present, corresponds
     to a real transaction on the XRPL network.
 
     If `xrpl_client` is None, this check is skipped (returns ok=True).
     Otherwise, uses `xrpl_client.request(Tx, {...})` to look up each tx.
+
+    Args:
+        log: the log to verify.
+        xrpl_client: an XRPL client. None skips the check entirely.
+        expect_anchors: how many anchored entries the log is expected to
+            have. Supplying this catches an attacker who **deletes** the
+            anchored entry -- without it, a log with no anchors left
+            reports success, because there is nothing left to check.
+        expected_anchor_hash: the anchor hash the log is expected to
+            contain. Catches a substituted anchor.
+
+    Both expectations are worth supplying in any setting where the log's
+    integrity is being asserted to someone else: an anchor that has been
+    removed is indistinguishable from a log that was never anchored.
     """
     errors: list[str] = []
     if xrpl_client is None:
         return VerificationResult(ok=True, errors=[])
 
-    for e in log.storage.all_entries():
+    entries = log.storage.all_entries()
+
+    anchored = [e for e in entries if e.on_chain_tx_hash is not None]
+
+    if expect_anchors is not None and len(anchored) != expect_anchors:
+        errors.append(
+            f"Expected {expect_anchors} anchored entr"
+            f"{'y' if expect_anchors == 1 else 'ies'}, found {len(anchored)}"
+            " -- an anchored entry may have been removed"
+        )
+
+    if expected_anchor_hash is not None:
+        present = {e.on_chain_tx_hash for e in anchored}
+        if expected_anchor_hash not in present:
+            errors.append(
+                f"Expected anchor {expected_anchor_hash[:16]}... is not present "
+                f"in the log -- the anchor was removed or substituted"
+            )
+
+    for e in anchored:
         if e.on_chain_tx_hash is None:
             continue
         try:

@@ -55,6 +55,24 @@ CREATE TABLE IF NOT EXISTS entries (
 
 CREATE INDEX IF NOT EXISTS idx_entries_hash ON entries(entry_hash);
 CREATE INDEX IF NOT EXISTS idx_entries_ts ON entries(timestamp);
+
+-- The head hash of each log, updated on every append.
+--
+-- A hash chain verified inward from the entries present cannot detect
+-- truncation: a log with its tail removed verifies exactly as well as an
+-- intact one. This table is the storage's own memory of how long the log
+-- was, so a truncation leaves it ahead of the actual last entry.
+--
+-- It is a local memory, not an external guarantee. An attacker who can
+-- write to this table can hide a truncation. That is why `verify_chain`
+-- also accepts an `expected_head` the caller holds independently.
+CREATE TABLE IF NOT EXISTS log_heads (
+    log_id     TEXT NOT NULL,
+    sequence   INTEGER NOT NULL,
+    head_hash  TEXT NOT NULL,
+    updated_at INTEGER NOT NULL,
+    PRIMARY KEY (log_id)
+);
 """
 
 
@@ -96,6 +114,8 @@ class SQLiteStorage(Storage):
                 "Cannot append an entry without both signatures "
                 "(sig_a and sig_b must be populated)"
             )
+        # Recorded before the entry is written, in the same transaction, so
+        # the head and the entry it describes can never disagree.
         self._conn.execute(
             """
             INSERT INTO entries (
@@ -119,7 +139,37 @@ class SQLiteStorage(Storage):
                 entry.sig_b,
             ),
         )
+        # Update the recorded head in the same transaction as the entry, so
+        # the head and the entry it describes can never disagree.
+        self._conn.execute(
+            """
+            INSERT INTO log_heads (log_id, sequence, head_hash, updated_at)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(log_id) DO UPDATE SET
+                sequence   = excluded.sequence,
+                head_hash  = excluded.head_hash,
+                updated_at = excluded.updated_at
+            """,
+            (self.log_id, entry.sequence, entry.entry_hash, entry.timestamp),
+        )
         self._conn.commit()
+
+    def recorded_head(self) -> "str | None":
+        """The head hash this storage last committed, or None if empty.
+
+        Read from the `log_heads` table rather than derived from the
+        entries, which is the whole point: a truncated log still has
+        entries, but its recorded head still names the entry that was
+        removed.
+        """
+        cur = self._conn.execute(
+            "SELECT head_hash FROM log_heads WHERE log_id = ?", (self.log_id,)
+        )
+        row = cur.fetchone()
+        if row is not None:
+            return row["head_hash"]
+        # A log written before the head table existed has no recorded head.
+        return None
 
     def get(self, sequence: int) -> "Entry | None":
         cur = self._conn.execute(
