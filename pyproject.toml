@@ -25,7 +25,7 @@ dependencies = [
     "xrpl-py>=5.0,<6",
     # xrpl_agent_id is not on PyPI yet -- install from GitHub.
     # Required for AgentIdentity (used in docstrings + SigningPair.from_identities).
-    "xrpl_agent_id @ git+https://github.com/DuNorth595/xrpl_agent_id.git@v0.5.1",
+    "xrpl_agent_id @ git+https://github.com/DuNorth595/xrpl_agent_id.git@v0.5.2",
 ]
 
 [project.optional-dependencies]
