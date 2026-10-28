@@ -97,6 +97,17 @@ def test_documented_offline_count_is_current() -> None:
         "docs/00_executive_summary.md": r"\*\*(\d+) offline tests pass",
         "docs/02_testing_log.md": r"Local pytest \((\d+) tests",
     }
+    # The executive summary also states the default-run result in prose;
+    # it must agree with the offline count.
+    summary = _read("docs/00_executive_summary.md")
+    run_result = re.search(r"a default run reports `(\d+) passed", summary)
+    assert run_result, (
+        "docs/00_executive_summary.md no longer states the default-run result"
+    )
+    assert int(run_result.group(1)) == expected, (
+        f"the executive summary says a default run reports "
+        f"{run_result.group(1)} passed; the suite has {expected}."
+    )
     for rel, pattern in docs.items():
         text = _read(rel)
         found = re.search(pattern, text)
