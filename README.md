@@ -10,6 +10,7 @@ verifies them.
 [![xrpl-py 5.0+](https://img.shields.io/badge/xrpl--py-5.0+-black.svg)](https://pypi.org/project/xrpl-py/)
 [![SPDX: REUSE](https://img.shields.io/badge/SPDX-REUSE--compliant-brightgreen)](https://reuse.software/)
 [![CI](https://github.com/DuNorth595/xrpl_agent_log/actions/workflows/ci.yml/badge.svg)](https://github.com/DuNorth595/xrpl_agent_log/actions/workflows/ci.yml)
+[![XERJ Corpus Hub contributor](https://hub.xerj.org/contributors/DuNorth595/badge.svg)](https://hub.xerj.org/contributors/DuNorth595)
 [![GitHub release](https://img.shields.io/badge/release-v0.4.0-blue)](https://github.com/DuNorth595/xrpl_agent_log/releases)
 
 <p align="center">
