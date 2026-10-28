@@ -4,7 +4,7 @@
 **Project:** xrpl_agent_log v0.2.0
 **Run date:** Wednesday, September 30, 2026
 **Network:** `s.altnet.rippletest.net:51234` (XRPL public testnet)
-**Working tree:** `~/Desktop/LIFE_MEMORY/PROJECTS/XRPL_AGENT_LOG/`
+**Working tree:** `<project-root>/`
 
 ## Summary
 
@@ -187,7 +187,7 @@ AD947C0EC316E853...   Previous single-anchor run (still on ledger)
 ## Reproducing this run
 
 ```bash
-cd ~/Desktop/LIFE_MEMORY/PROJECTS/XRPL_AGENT_LOG
+cd <project-root>
 
 # Local suite (offline, deterministic, ~3s):
 PYTHONPATH=src python3 -m pytest tests/ -v
