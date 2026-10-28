@@ -130,7 +130,7 @@ pip install "xrpl_agent_log[dev] @ git+https://github.com/DuNorth595/xrpl_agent_
 ```
 
 > **Why no `pip install xrpl_agent_log`?** Both `xrpl_agent_log` and
-> `xrpl_agent_id` is published via GitHub, not PyPI. Install from source.
+> `xrpl_agent_id` are published via GitHub, not PyPI. Install from source.
 > Once both reach PyPI, `pip install xrpl_agent_log` will work.
 > Until then, install via `git+https://...`.
 
