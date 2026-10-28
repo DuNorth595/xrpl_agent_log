@@ -30,10 +30,25 @@ that keeps a deprecated accessor out of the hot path.
   `SigningPair.from_wallets_with_dids()`, instead of an `AttributeError`
   from deep inside the identity object.
 
+### Changed
+- **The Python floor is now 3.10, not 3.9.** `xrpl-py` 5.x requires
+  Python >= 3.10, so a package that claimed to support 3.9 while
+  pinning `xrpl-py>=5.0` could not actually be installed on 3.9. This
+  broke CI the moment the xrpl-py pin was raised — pip could not
+  resolve the dependency on the 3.9 runner. The floor, the classifiers,
+  the CI matrix, and the README badge are now 3.10-3.13, matching
+  `xrpl_agent_id` v0.5.x.
+
 ### Added
 - `tests/test_identity_pairing.py` — pins both behaviours: no
   `DeprecationWarning` from `from_identities()`, and a clear error for
   an externally-signing identity.
+- `tests/test_documented_counts.py` — pins the version across
+  `pyproject.toml`, `__init__.py` and the README badge; the offline test
+  count; the dependency pins against `xrpl_agent_id`'s own requirement;
+  and the Python floor against `pyproject.toml`, the README, and the CI
+  matrix, so the matrix cannot test a version below the declared floor
+  again.
 - The README's "Relationship to `xrpl_agent_id`" section now shows the
   two packages working together, states the version compatibility
   requirement, and explains why an external signer cannot be used for

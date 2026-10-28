@@ -149,3 +149,59 @@ def test_dependency_pins_agree_with_xrpl_agent_id() -> None:
         "first release whose AgentIdentity.provider accessor works "
         "without a deprecation warning."
     )
+
+
+def test_python_floor_is_consistent() -> None:
+    """The Python floor must match pyproject, the README, and the CI matrix.
+
+    xrpl-py 5.x requires Python >= 3.10. A package that claims to
+    support 3.9 but pins xrpl-py>=5.0 cannot actually be installed on
+    3.9 -- pip fails to resolve the dependency, which is what broke CI
+    when the xrpl-py pin was raised.
+    """
+    import re as _re
+
+    pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    floor = _re.search(r'requires-python\s*=\s*"[^"]*?(\d+\.\d+)"', pyproject)
+    assert floor, "pyproject.toml does not state a Python floor"
+    minimum = floor.group(1)
+
+    readme = _read("README.md")
+    assert f"| **Python:** | ≥ {minimum} |" in readme, (
+        f"README.md does not state the Python floor as ≥ {minimum}"
+    )
+    assert f"python-{minimum}+" in readme, (
+        f"README.md's Python badge does not say {minimum}"
+    )
+
+    # The CI matrix must not test a version below the floor.
+    workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    matrix = _re.search(r'python-version:\s*\[([^\]]+)\]', workflow)
+    assert matrix, "ci.yml does not declare a python-version matrix"
+    versions = _re.findall(r'"([\d.]+)"', matrix.group(1))
+    below = [v for v in versions if tuple(map(int, v.split("."))) < tuple(map(int, minimum.split(".")))]
+    assert not below, (
+        f"CI tests Python {below}, which is below the declared floor of {minimum}"
+    )
+
+
+def test_classifiers_match_the_python_floor() -> None:
+    """Every declared Python classifier must be at or above the floor."""
+    import re as _re
+
+    pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    floor = _re.search(r'requires-python\s*=\s*"[^"]*?(\d+\.\d+)"', pyproject).group(1)
+    min_tuple = tuple(map(int, floor.split(".")))
+
+    classifiers = _re.findall(
+        r'"Programming Language :: Python :: (\d+\.\d+)"', pyproject
+    )
+    assert classifiers, "pyproject.toml declares no Python classifiers"
+    below = [
+        c for c in classifiers
+        if tuple(map(int, c.split("."))) < min_tuple
+    ]
+    assert not below, (
+        f"pyproject.toml claims support for Python {below}, below the "
+        f"declared floor of {floor}"
+    )

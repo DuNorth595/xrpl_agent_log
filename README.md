@@ -6,7 +6,7 @@ replayable from public ledger data alone — you make the anchors, this library
 verifies them.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![xrpl-py 5.0+](https://img.shields.io/badge/xrpl--py-5.0+-black.svg)](https://pypi.org/project/xrpl-py/)
 [![SPDX: REUSE](https://img.shields.io/badge/SPDX-REUSE--compliant-brightgreen)](https://reuse.software/)
 [![CI](https://github.com/DuNorth595/xrpl_agent_log/actions/workflows/ci.yml/badge.svg)](https://github.com/DuNorth595/xrpl_agent_log/actions/workflows/ci.yml)
@@ -29,7 +29,7 @@ be edited afterwards without detection.
 | **Organization:** | S_DevLabs (Strategic Development Labs) |
 | **Contact:** | S_DevLabs@outlook.com |
 | **License:** | MIT |
-| **Python:** | ≥ 3.9 |
+| **Python:** | ≥ 3.10 |
 | **Dependencies:** | `xrpl-py` ≥ 5.0, [`xrpl_agent_id`](https://github.com/DuNorth595/xrpl_agent_id) ≥ 0.5.1 (installed from GitHub — not on PyPI yet) |
 | **Optional extras:** | `dev` (pytest + pre-commit) |
 
@@ -107,9 +107,9 @@ so you get the failure reason, not just `False`.
   it does **not** submit the anchor transaction itself. See "On-chain anchoring".
 - **No infrastructure** — pure Python + SQLite + XRPL JSON-RPC
 - **Auditor-friendly** — verify with just public keys + the chain + JSON-RPC
-- **Live-testable on XRPL Testnet** — 48 offline tests pass by default; the live testnet
+- **Live-testable on XRPL Testnet** — 50 offline tests pass by default; the live testnet
   test is gated behind `RUN_LIVE=1` and self-skips, so a normal run reports
-  `48 passed, 1 skipped`
+  `50 passed, 1 skipped`
 - **Honest about limits** — see [SECURITY.md](SECURITY.md) for known issues
 - **SPDX-licensed** — MIT for code, REUSE-compliant metadata
 

@@ -17,7 +17,7 @@ pre-commit install
 ## Before you open a pull request
 
 ```bash
-pytest tests/ -q      # 48 passed, 1 skipped (the live testnet test needs RUN_LIVE=1)
+pytest tests/ -q      # 50 passed, 1 skipped (the live testnet test needs RUN_LIVE=1)
 reuse lint            # enforced in CI
 pre-commit run --all-files
 ```
@@ -33,7 +33,7 @@ pre-commit run --all-files
 - **Do not overstate what the library does.** It *records* an on-chain anchor hash
   and verifies it; it does **not** submit anchor transactions. Keep that distinction
   in the docs — it is the single most misrepresented claim this project has had.
-- **Test counts must be measured.** The offline suite is 48 tests; the live testnet
+- **Test counts must be measured.** The offline suite is 50 tests; the live testnet
   test self-skips without `RUN_LIVE=1`. Quote the real `pytest` output.
 
 ## Adding an SPDX header

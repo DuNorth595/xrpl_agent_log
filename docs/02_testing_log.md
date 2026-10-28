@@ -14,7 +14,7 @@
 
 ## What each layer proves
 
-### Local pytest (48 tests)))
+### Local pytest (50 tests))))
 
 - Entry serialization is canonical (same payload → same hash)
 - Hash chain detects single-byte mutations
@@ -24,7 +24,7 @@
 - CLI surface is reachable (`--version`, `--demo`)
 - Verifier functions return `True` for valid logs and catch known tampering
 
-These run on every commit in CI, on Python 3.9–3.12, ubuntu-24.04.
+These run on every commit in CI, on Python 3.10–3.13, ubuntu-24.04.
 
 ### Live testnet pytest (1 test)
 
@@ -83,7 +83,7 @@ On mainnet, wallets are funded once; per-tx cost is ~12 drops
 ## Running locally
 
 ```bash
-# Local pytest (48 tests), ~2s)
+# Local pytest (50 tests)), ~2s)
 python -m pytest tests/ -v
 
 # Live testnet pytest (1 test, ~18s; needs network + faucet access)
