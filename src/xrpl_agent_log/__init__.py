@@ -43,7 +43,7 @@ from xrpl_agent_log.verify import (
     verify_signatures,
 )
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 XRPL_AGENT_LOG_VERSION = __version__  # canonical alias
 
 # The source literal above is authoritative. It is the version of the code

@@ -1,7 +1,7 @@
 # xrpl_agent_log — Executive Summary
 
 **Tamper-Evident History Log** · XRP Ledger (anchored + hash-chained)
-**Live-testable on XRPL Testnet** · 43 offline passing, 1 live test gated behind RUN_LIVE=1 · MIT licensed
+**Live-testable on XRPL Testnet** · 45 offline passing, 1 live test gated behind RUN_LIVE=1 · MIT licensed
 
 **Contact**
 S_DevLabs
@@ -23,6 +23,24 @@ AI agents are making decisions — granting access, moving funds, signing off on
 
 Anyone in the world can verify any agent's log with the **public key + the chain + the on-chain anchor hashes** — no API key, no permission, no trust in a vendor's internal database.
 
+## Companion: `xrpl_agent_id`
+
+This library records **what two agents agreed to**. It does not say **who
+they are**. That is
+[`xrpl_agent_id`](https://github.com/DuNorth595/xrpl_agent_id) — W3C
+`did:xrpl` identities and XLS-70 credentials on the same ledger.
+
+They compose with no glue code:
+
+```python
+pair = SigningPair.from_identities(alice_identity, bob_identity)
+```
+
+`SigningPair.from_identities()` takes two `AgentIdentity` objects and reads
+their DIDs and signers directly, so a log entry carries real agent
+identities rather than opaque strings. See
+[`01_usage.md`](01_usage.md) for the worked example.
+
 ## How It Works
 
 **Three layers of tamper-evidence:**
@@ -38,7 +56,7 @@ Verifiers query the ledger. They see the entry, the chain, the signatures, and (
 - **Live XRPL testnet anchor:** tx hash `AD947C0EC316E8536A39C44DCD33B3373387DE5886692474A0FEA378ED5EE715`
 - **Test URL:** `https://testnet.xrpl.org/transactions/AD947C0EC316E8536A39C44DCD33B3373387DE5886692474A0FEA378ED5EE715`
 
-**Library state:** Full Python package, MIT licensed. **43 offline tests pass; the live testnet test self-skips without `RUN_LIVE=1`, so a default run reports `43 passed, 1 skipped`.** Ergonomic API: `Log(pair, storage)`, `SigningPair.from_wallets_with_dids(...)`, `entry = log.append(intent=..., params=...)`, `verify_chain(log)`, `verify_signatures(log, wallet_a, wallet_b)`, `verify_on_chain_anchor(log, xrpl_client=None)`. Plus a CLI: `python -m xrpl_agent_log --demo`.
+**Library state:** Full Python package, MIT licensed. **45 offline tests pass; the live testnet test self-skips without `RUN_LIVE=1`, so a default run reports `43 passed, 1 skipped`.** Ergonomic API: `Log(pair, storage)`, `SigningPair.from_wallets_with_dids(...)`, `entry = log.append(intent=..., params=...)`, `verify_chain(log)`, `verify_signatures(log, wallet_a, wallet_b)`, `verify_on_chain_anchor(log, xrpl_client=None)`. Plus a CLI: `python -m xrpl_agent_log --demo`.
 
 **Live verification report:** [`02_testing_log.md`](02_testing_log.md) — 5 pages, real XRPL testnet txs, all three verify_* layers passing.
 

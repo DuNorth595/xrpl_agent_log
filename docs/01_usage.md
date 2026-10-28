@@ -74,6 +74,42 @@ Constructors: `SigningPair.from_wallets_with_dids(...)`, `SigningPair.from_ident
 Each DID must end in the matching wallet's classic address — `attach_signature`
 raises `ValueError` if they do not match.
 
+#### Pairing with `xrpl_agent_id` identities
+
+`from_identities()` takes two
+[`xrpl_agent_id`](https://github.com/DuNorth595/xrpl_agent_id) `AgentIdentity`
+objects and reads their DIDs, network, and signers directly — no glue code
+between the two packages:
+
+```python
+from xrpl_agent_log import Log, SigningPair, SQLiteStorage
+from xrpl_agent_id import AgentIdentity
+
+alice = AgentIdentity.from_seed(alice_seed, network="mainnet")
+bob = AgentIdentity.from_seed(bob_seed, network="mainnet")
+
+pair = SigningPair.from_identities(alice, bob)
+log = Log(pair, SQLiteStorage("log.db", log_id="alices-deal"))
+
+entry = log.append(intent="transfer 25 USDC", params={"amount": "25", "asset": "USDC"})
+print(entry.entry_hash, entry.sig_a[:16])
+```
+
+This reads `AgentIdentity.provider`, the accessor introduced in
+`xrpl_agent_id` v0.5.0. The older `.wallet` accessor is deprecated there and
+removed in v0.6.0.
+
+**Both identities must sign in-process.** A log entry is signed with an
+arbitrary *message*, not an XRPL transaction, so the signer must hold a key in
+this process. An identity backed by a KMS or hardware wallet signs externally
+and has no in-process key; `from_identities()` raises `ValueError` naming
+`from_wallets_with_dids()` as the alternative for that side.
+
+**Version compatibility.** The two packages pin the same `xrpl-py` range
+(`>=5.0,<6`). Installing them together therefore resolves to
+`xrpl_agent_id` v0.5.1 — an earlier pin of `xrpl-py<5.0` in this package made
+pip silently downgrade `xrpl_agent_id` to v0.4.3.
+
 ### `Entry`
 
 ```python

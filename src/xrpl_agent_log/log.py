@@ -38,6 +38,21 @@ if TYPE_CHECKING:
     from xrpl_agent_id.identity import AgentIdentity
 
 
+
+def _wallet_of(identity: "AgentIdentity"):
+    """The in-process xrpl-py Wallet behind an identity, if there is one.
+
+    ``AgentIdentity.provider`` is the supported accessor. A
+    ``SeedWalletProvider`` wraps an ``xrpl.wallet.Wallet`` and exposes
+    it as ``.wallet``; a provider that signs externally (a KMS, a
+    hardware wallet) does not, and returns None here.
+    """
+    provider = getattr(identity, "provider", None)
+    if provider is None:
+        return None
+    return getattr(provider, "wallet", None)
+
+
 @dataclass
 class SigningPair:
     """The two agents whose signatures are required for every entry."""
@@ -71,9 +86,32 @@ class SigningPair:
         identity_a: "AgentIdentity",
         identity_b: "AgentIdentity",
     ) -> "SigningPair":
+        """Build a pair from two agent identities.
+
+        Uses ``AgentIdentity.provider`` rather than the deprecated
+        ``.wallet``. The provider is what actually signs, and it works
+        for identities backed by a KMS or hardware wallet as well as
+        for the in-process ``SeedWalletProvider``.
+
+        ``attach_signature`` needs a signer that can sign an arbitrary
+        message -- not an XRPL transaction. A ``SeedWalletProvider``
+        exposes the underlying ``xrpl.wallet.Wallet``, which is what
+        that call needs. An identity whose provider signs externally
+        has no in-process key, so it must be paired through
+        ``from_wallets_with_dids`` with an explicit signer.
+        """
+        wallet_a = _wallet_of(identity_a)
+        wallet_b = _wallet_of(identity_b)
+        if wallet_a is None or wallet_b is None:
+            raise ValueError(
+                "one of these identities signs through an external provider "
+                "and has no in-process key. Use "
+                "SigningPair.from_wallets_with_dids() with an explicit "
+                "signer for that side."
+            )
         return cls(
-            wallet_a=identity_a.wallet,
-            wallet_b=identity_b.wallet,
+            wallet_a=wallet_a,
+            wallet_b=wallet_b,
             did_a=identity_a.did,
             did_b=identity_b.did,
             network=identity_a.network,

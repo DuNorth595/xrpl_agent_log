@@ -4,6 +4,41 @@ All notable changes to `xrpl_agent_log` are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-10-28
+
+Dependency compatibility with `xrpl_agent_id` v0.5.x, and one API change
+that keeps a deprecated accessor out of the hot path.
+
+### Fixed
+- **Installing both packages silently downgraded `xrpl_agent_id`.** This
+  package pinned `xrpl-py>=4.5.0,<5.0` while `xrpl_agent_id` v0.5.x
+  requires `xrpl-py>=5.0,<6`. pip resolved the conflict by installing
+  `xrpl_agent_id` v0.4.3 and `xrpl-py` 4.5.0 — so a user who installed
+  both got the old versions of both, with no error. The pins now agree:
+  `xrpl-py>=5.0,<6` and `xrpl_agent_id` v0.5.1.
+- **`SigningPair.from_identities()` used the deprecated
+  `AgentIdentity.wallet`.** `xrpl_agent_id` v0.5.0 renamed it to
+  `.provider` and deprecated the old name; it is removed in v0.6.0. The
+  method now reads `.provider`, so it raises no `DeprecationWarning` and
+  will keep working after v0.6.0.
+
+### Changed
+- An identity whose provider signs externally — a KMS or hardware
+  wallet — has no in-process key, because a log entry is signed with an
+  arbitrary message rather than an XRPL transaction. `from_identities()`
+  now raises a `ValueError` that names the alternative,
+  `SigningPair.from_wallets_with_dids()`, instead of an `AttributeError`
+  from deep inside the identity object.
+
+### Added
+- `tests/test_identity_pairing.py` — pins both behaviours: no
+  `DeprecationWarning` from `from_identities()`, and a clear error for
+  an externally-signing identity.
+- The README's "Relationship to `xrpl_agent_id`" section now shows the
+  two packages working together, states the version compatibility
+  requirement, and explains why an external signer cannot be used for
+  this side of the pair.
+
 ## [0.3.0] - 2026-10-23
 
 Documentation, packaging, and a dependency correction. No API changes.

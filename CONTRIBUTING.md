@@ -33,7 +33,7 @@ pre-commit run --all-files
 - **Do not overstate what the library does.** It *records* an on-chain anchor hash
   and verifies it; it does **not** submit anchor transactions. Keep that distinction
   in the docs — it is the single most misrepresented claim this project has had.
-- **Test counts must be measured.** The offline suite is 43 tests; the live testnet
+- **Test counts must be measured.** The offline suite is 45 tests; the live testnet
   test self-skips without `RUN_LIVE=1`. Quote the real `pytest` output.
 
 ## Adding an SPDX header

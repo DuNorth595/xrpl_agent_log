@@ -10,7 +10,7 @@ verifies them.
 [![xrpl-py 4.5+](https://img.shields.io/badge/xrpl--py-4.5+-black.svg)](https://pypi.org/project/xrpl-py/)
 [![SPDX: REUSE](https://img.shields.io/badge/SPDX-REUSE--compliant-brightgreen)](https://reuse.software/)
 [![CI](https://github.com/DuNorth595/xrpl_agent_log/actions/workflows/ci.yml/badge.svg)](https://github.com/DuNorth595/xrpl_agent_log/actions/workflows/ci.yml)
-[![GitHub release](https://img.shields.io/badge/release-v0.3.0-blue)](https://github.com/DuNorth595/xrpl_agent_log/releases)
+[![GitHub release](https://img.shields.io/badge/release-v0.3.1-blue)](https://github.com/DuNorth595/xrpl_agent_log/releases)
 
 <p align="center">
   <img src="docs/social-preview.jpg" alt="xrpl_agent_log — social preview" width="600">
@@ -22,6 +22,16 @@ verifies them.
 
 A small Python library for recording what AI agents did, in a form that cannot
 be edited afterwards without detection.
+
+| **Package:** | `xrpl_agent_log` |
+| **Version:** | 0.3.1 |
+| **Author:** | Justin Douglas |
+| **Organization:** | S_DevLabs (Strategic Development Labs) |
+| **Contact:** | S_DevLabs@outlook.com |
+| **License:** | MIT |
+| **Python:** | ≥ 3.9 |
+| **Dependencies:** | `xrpl-py` ≥ 5.0, [`xrpl_agent_id`](https://github.com/DuNorth595/xrpl_agent_id) ≥ 0.5.1 (installed from GitHub — not on PyPI yet) |
+| **Optional extras:** | `dev` (pytest + pre-commit) |
 
 Three layers of tamper-evidence, each independently checkable:
 
@@ -90,7 +100,55 @@ assert result.ok, result.errors
 Every verification helper returns `VerificationResult(ok: bool, errors: list[str])`
 so you get the failure reason, not just `False`.
 
+## Highlights
+
+- **Three layers of tamper-evidence** — hash chain, mutual signatures, optional on-chain anchor.
+  The library *records* an anchor tx hash you supply and verifies it against the ledger;
+  it does **not** submit the anchor transaction itself. See "On-chain anchoring".
+- **No infrastructure** — pure Python + SQLite + XRPL JSON-RPC
+- **Auditor-friendly** — verify with just public keys + the chain + JSON-RPC
+- **Live-testable on XRPL Testnet** — 48 offline tests pass by default; the live testnet
+  test is gated behind `RUN_LIVE=1` and self-skips, so a normal run reports
+  `48 passed, 1 skipped`
+- **Honest about limits** — see [SECURITY.md](SECURITY.md) for known issues
+- **SPDX-licensed** — MIT for code, REUSE-compliant metadata
+
 ---
+
+## Install
+
+```bash
+# Install xrpl_agent_log — pulls xrpl_agent_id from GitHub automatically
+# (xrpl_agent_id is not on PyPI yet; see pyproject.toml)
+pip install "xrpl_agent_log @ git+https://github.com/DuNorth595/xrpl_agent_log.git@v0.3.1"
+```
+
+Or, for the very latest main:
+
+```bash
+pip install "xrpl_agent_log[dev] @ git+https://github.com/DuNorth595/xrpl_agent_log.git@v0.3.1"
+```
+
+> **Why no `pip install xrpl_agent_log`?** Both `xrpl_agent_log` and
+> `xrpl_agent_id` is published via GitHub, not PyPI. Install from source.
+> Once both reach PyPI, `pip install xrpl_agent_log` will work.
+> Until then, install via `git+https://...`.
+
+For development (test + pre-commit):
+
+```bash
+git clone https://github.com/DuNorth595/xrpl_agent_log.git
+cd xrpl_agent_log
+pip install -e ".[dev]"
+pre-commit install   # enables the local seed-scanner hook
+```
+
+---
+
+> **Repository layout:** this package uses a `src/` layout, while the companion
+> [`xrpl_agent_id`](https://github.com/DuNorth595/xrpl_agent_id) uses a flat layout.
+> Both are standard Python packaging and both install correctly — only the source
+> directory location differs.
 
 ## On-chain anchoring
 
@@ -214,6 +272,34 @@ does not require them to come from Agent ID.
 Each library is usable alone. Install `xrpl_agent_id` alongside this one if you
 want identity as well as history.
 
+**Using the two together.** `SigningPair.from_identities()` takes two
+`AgentIdentity` objects and reads their DIDs and network directly:
+
+```python
+from xrpl_agent_log import Log, SigningPair, SQLiteStorage
+from xrpl_agent_id import AgentIdentity
+
+alice = AgentIdentity.from_seed(alice_seed, network="mainnet")
+bob = AgentIdentity.from_seed(bob_seed, network="mainnet")
+
+log = Log(SigningPair.from_identities(alice, bob), SQLiteStorage("log.db"))
+```
+
+This reads `AgentIdentity.provider` — the supported accessor since
+`xrpl_agent_id` v0.5.0. The older `.wallet` accessor is deprecated and
+removed in v0.6.0.
+
+Both identities must sign **in-process**, because a log entry is signed
+with an arbitrary message rather than an XRPL transaction. An identity
+whose provider signs externally — a KMS or hardware wallet — has no
+in-process key; use `SigningPair.from_wallets_with_dids()` with an
+explicit signer for that side.
+
+**Version compatibility.** The two packages pin the same `xrpl-py` range
+(`>=5.0,<6`). Installing them together therefore resolves to
+`xrpl_agent_id` v0.5.1 and `xrpl-py` 5.x — an earlier pin of
+`xrpl-py<5.0` here made pip silently downgrade `xrpl_agent_id` to v0.4.3.
+
 ---
 
 ## Install
@@ -245,9 +331,9 @@ pre-commit install   # enables the local seed-scanner hook
   itself.
 - **No infrastructure** — pure Python + SQLite + XRPL JSON-RPC.
 - **Auditor-friendly** — verify with just public keys, the chain, and JSON-RPC.
-- **Live-testable on XRPL Testnet** — 43 offline tests pass by default; the
+- **Live-testable on XRPL Testnet** — 48 offline tests pass by default; the
   live testnet test is gated behind `RUN_LIVE=1` and self-skips, so a normal
-  run reports `43 passed, 1 skipped` *(verified against v0.3.0 on
+  run reports `48 passed, 1 skipped` *(verified against v0.3.0 on
   2026-10-27)*.
 - **Honest about limits** — see [SECURITY.md](SECURITY.md) and
   [`docs/03_known_issues.md`](docs/03_known_issues.md) for known issues.
