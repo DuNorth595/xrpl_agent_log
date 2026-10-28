@@ -318,6 +318,7 @@ explicit signer for that side.
 ## Related projects
 
 - [`xrpl_agent_id`](https://github.com/DuNorth595/xrpl_agent_id) — companion library: agent identity and authorization on XRPL
+- [`xrpl_did_mcp`](https://github.com/DuNorth595/xrpl_did_mcp) — MCP server exposing agent identity to any AI agent client
 - [`xaip-protocol`](https://github.com/xkumakichi/xaip-protocol) — provider-neutral execution evidence for agent tool calls
 - [`xrpl-py`](https://github.com/XRPLF/xrpl-py) — the Python client this wraps
 
